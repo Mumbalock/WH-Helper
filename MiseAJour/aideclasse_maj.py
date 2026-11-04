@@ -12,10 +12,14 @@ de dernière modification de chaque guide de classe. Si rien n'a changé depuis
 la dernière mise à jour réussie, il s'arrête là. Utilise seulement la
 bibliothèque standard de Python.
 
-Lancé chaque jour par une tâche planifiée Windows (voir installer_auto.bat).
+La lecture de Wowhead est faite chaque jour par GitHub (.github/workflows/maj.yml),
+qui enregistre les fichiers à jour dans le dépôt. Sur le PC, la tâche planifiée Windows
+(voir installer_auto.bat) lance seulement --depuis-github : elle télécharge l'addon à jour
+depuis GitHub et le copie dans le jeu.
 
 Options :
-  --force          met à jour même si Wowhead n'a rien changé
+  --depuis-github  ne lit pas Wowhead : télécharge l'addon à jour depuis GitHub et le copie dans le jeu
+  --force          met à jour même si Wowhead (ou GitHub) n'a rien changé
   --sans-copie     ne copie pas l'addon dans le jeu
   --jeu CHEMIN     dossier AddOns du jeu (sinon détection automatique ou config.txt)
   --simulateur     refait seulement Simulateur/simulateur.html (conseils, zones), sans téléchargement
@@ -29,7 +33,11 @@ import shutil
 import sys
 import time
 import urllib.request
-import winreg
+import zipfile
+try:
+    import winreg            # seulement sous Windows (recherche du dossier du jeu)
+except ImportError:          # serveur GitHub (Linux) : pas de jeu à trouver
+    winreg = None
 
 ICI = os.path.dirname(os.path.abspath(__file__))
 RACINE = os.path.dirname(ICI)
@@ -913,6 +921,8 @@ def dossiers_wow():
     candidats = []
     for cle in (r"SOFTWARE\WOW6432Node\Blizzard Entertainment\World of Warcraft",
                 r"SOFTWARE\Blizzard Entertainment\World of Warcraft"):
+        if winreg is None:
+            break
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, cle) as k:
                 chemin = winreg.QueryValueEx(k, "InstallPath")[0]
@@ -963,17 +973,75 @@ def trouver_addons(arg):
     return None
 
 
-def copier_addon(addons):
+def copier_addon(addons, source=ADDON_SRC):
     dest = os.path.join(addons, "AideClasse")
     os.makedirs(addons, exist_ok=True)
     tmp = dest + ".maj"
     if os.path.isdir(tmp):
         shutil.rmtree(tmp)
-    shutil.copytree(ADDON_SRC, tmp)
+    shutil.copytree(source, tmp)
     if os.path.isdir(dest):
         shutil.rmtree(dest)
     os.replace(tmp, dest)
     log(f"Addon copié dans {dest}")
+
+
+# --- Récupération depuis GitHub -------------------------------------------------
+
+DEPOT = "Mumbalock/ADDON-WOWHEAD"
+BRANCHE = "main"
+ETAT_PC = os.path.join(ICI, "etat_pc.json")   # dernière version GitHub installée sur ce PC
+
+
+def lire_json(chemin):
+    if os.path.isfile(chemin):
+        try:
+            with open(chemin, encoding="utf-8") as f:
+                return json.load(f)
+        except (OSError, ValueError):
+            pass
+    return {}
+
+
+def depuis_github(jeu, force):
+    """Télécharge l'addon à jour depuis GitHub (mis à jour chaque jour par le serveur GitHub)
+    et le copie dans le jeu, seulement si une nouvelle version a été publiée."""
+    addons = trouver_addons(jeu)
+    if not addons:
+        return
+    etat = lire_json(ETAT_PC)
+    req = urllib.request.Request(f"https://api.github.com/repos/{DEPOT}/commits/{BRANCHE}",
+                                 headers={"User-Agent": UA, "Accept": "application/vnd.github+json"})
+    with urllib.request.urlopen(req, timeout=40) as r:
+        commit = json.load(r)
+    sha = commit["sha"]
+    date = commit["commit"]["committer"]["date"][:16].replace("T", " ")
+    deja_la = os.path.isfile(os.path.join(addons, "AideClasse", "AideClasse.toc"))
+    if sha == etat.get("sha") and deja_la and not force:
+        log(f"Rien de nouveau sur GitHub (version du {date} UTC déjà installée).")
+        return
+    log(f"Nouvelle version sur GitHub ({date} UTC), téléchargement…")
+    req = urllib.request.Request(f"https://codeload.github.com/{DEPOT}/zip/{sha}", headers={"User-Agent": UA})
+    with urllib.request.urlopen(req, timeout=120) as r:
+        octets = r.read()
+    tmp = os.path.join(ICI, "_github")
+    if os.path.isdir(tmp):
+        shutil.rmtree(tmp)
+    try:
+        import io
+        with zipfile.ZipFile(io.BytesIO(octets)) as z:
+            z.extractall(tmp)
+        racines = [os.path.join(tmp, n) for n in os.listdir(tmp)]
+        source = next((os.path.join(r, "AideClasse") for r in racines
+                       if os.path.isfile(os.path.join(r, "AideClasse", "AideClasse.toc"))), None)
+        if not source:
+            raise ValueError("dossier AideClasse introuvable dans l'archive GitHub")
+        copier_addon(addons, source)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    etat["sha"] = sha
+    with open(ETAT_PC, "w", encoding="utf-8") as f:
+        json.dump(etat, f)
 
 
 # --- Programme principal --------------------------------------------------------
@@ -986,14 +1054,21 @@ def main():
     if "--simulateur" in args:
         regenerer_simulateur()
         return
-
-    etat = {}
-    if os.path.isfile(ETAT):
+    if "--depuis-github" in args:
         try:
-            with open(ETAT, encoding="utf-8") as f:
-                etat = json.load(f)
-        except (OSError, ValueError):
-            etat = {}
+            depuis_github(jeu, force)
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                log(f"Dépôt GitHub {DEPOT} introuvable : il est sans doute privé (il doit être public).")
+            else:
+                log(f"Mise à jour depuis GitHub impossible : {e}")
+        except OSError as e:
+            log(f"Mise à jour depuis GitHub impossible (pas d'internet, ou jeu ouvert ?) : {e}")
+        except Exception as e:
+            log(f"Mise à jour depuis GitHub impossible : {e}")
+        return
+
+    etat = lire_json(ETAT)
 
     a_faire, signature = True, None
     try:
