@@ -7,6 +7,7 @@
 ## IconTexture: Interface\Icons\INV_Misc_Book_09
 
 Core.lua
+Locale.lua
 Data\Warrior.lua
 Data\Paladin.lua
 Data\Hunter.lua
@@ -17,6 +18,10 @@ Data\Mage.lua
 Data\Warlock.lua
 Data\Druid.lua
 Data\Conseils.lua
+Data\ConseilsEN.lua
+Data\Rotation.lua
+Data\Enchants.lua
 Data\Zones.lua
+Data\ZonesEN.lua
 UI.lua
 Minimap.lua

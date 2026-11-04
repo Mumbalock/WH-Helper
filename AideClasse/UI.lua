@@ -1,8 +1,9 @@
 -- AideClasse : fenêtre principale
 --   Talents  : les 3 arbres en icônes + barre de niveau (quel talent à quel niveau)
---   Stuff    : priorité des stats + objets BiS avec icônes
---   Conseils : texte
+--   Stuff    : Équipement (stats + BiS) / Enchants & compos
+--   Conseils : Classe / Rotation (icônes, par tranche de niveau) / Zones d'xp
 local _, ns = ...
+local T, D = ns.T, ns.D
 
 local GREEN, GREY, GOLD, WHITE, ORANGE = "|cff40ff40", "|cff808080", "|cffffd100", "|cffffffff", "|cffff9933"
 local TABS = {
@@ -10,7 +11,10 @@ local TABS = {
     { key = "stuff",    label = "Stuff" },
     { key = "conseils", label = "Conseils" },
 }
-local W, H = 700, 650
+local W, H = 700, 650                    -- taille par défaut de la fenêtre
+local MIN_W, MIN_H, MAX_W, MAX_H = 580, 440, 1600, 1200
+local TALENTS_W, TALENTS_H = W - 28, H - 108 -- zone Talents à l'échelle 1
+local contentW = W - 80                  -- largeur du texte dans la zone qui défile
 local TREE_W, TREE_H, CELL, CELL_Y, ICON = 216, 360, 50, 46, 36
 local TREE_TINT = { { 0.10, 0.22, 0.14 }, { 0.12, 0.24, 0.08 }, { 0.30, 0.12, 0.04 } }
 
@@ -18,14 +22,36 @@ local frame, currentTab
 local tabButtons, specButtons = {}, {}
 local talentsView, scrollView, scroll, content, text
 local buildButton, buildMenu, trees, slider, levelText, infoText, playerText, linkBox
+local buildLabel, linkLabel, langButton
 local itemRows, zoneRows = {}, {}
-local subBar, subButtons = nil, {}
+local subBar, subButtons = nil, {} -- subButtons[onglet][mode] = bouton
 local viewLevel -- niveau affiché par la barre
 local ZONES_URL = "https://www.wowhead.com/forever/zones"
 
-local function conseilsMode()
-    return (ns.db and ns.db.conseilsMode == "zones") and "zones" or "classe"
+-- Sous-onglets : clé sauvegardée dans ns.db, liste des modes (le premier est celui par défaut).
+local SUBTABS = {
+    conseils = { db = "conseilsMode", modes = {
+        { key = "classe", label = "Classe" },
+        { key = "rotation", label = "Rotation" },
+        { key = "zones", label = "Zones d'xp" },
+    } },
+    stuff = { db = "stuffMode", modes = {
+        { key = "equipement", label = "Équipement" },
+        { key = "enchants", label = "Enchants & compos" },
+    } },
+}
+
+local function subMode(tab)
+    local def = SUBTABS[tab]
+    if not def then return nil end
+    local v = ns.db and ns.db[def.db]
+    for _, m in ipairs(def.modes) do
+        if m.key == v then return v end
+    end
+    return def.modes[1].key
 end
+
+local function conseilsMode() return subMode("conseils") end
 
 local function icon(name)
     if not name or name == "" then return "Interface\\Icons\\INV_Misc_QuestionMark" end
@@ -110,15 +136,15 @@ local function getCell(tree, i)
         local ok = pcall(GameTooltip.SetSpellByID, GameTooltip, self.talent.sort)
         if not ok then GameTooltip:SetText(ns.SpellName(self.talent.sort, self.talent.nom)) end
         GameTooltip:AddLine(" ")
-        GameTooltip:AddLine("Niveau " .. viewLevel .. " : " .. self.r .. "/" .. self.talent.rangMax, 1, 0.82, 0)
+        GameTooltip:AddLine(T("Niveau %d : %d/%d", viewLevel, self.r, self.talent.rangMax), 1, 0.82, 0)
         if self.final > 0 then
-            GameTooltip:AddLine("Dans ce build : " .. self.final .. "/" .. self.talent.rangMax, 1, 1, 1)
+            GameTooltip:AddLine(T("Dans ce build : %d/%d", self.final, self.talent.rangMax), 1, 1, 1)
             if self.levels then
                 local a, b = self.levels[1], self.levels[2]
-                GameTooltip:AddLine("À prendre " .. (a == b and ("au niveau " .. a) or ("du niveau " .. a .. " au " .. b)), 0.25, 1, 0.25)
+                GameTooltip:AddLine(a == b and T("À prendre au niveau %d", a) or T("À prendre du niveau %d au %d", a, b), 0.25, 1, 0.25)
             end
         else
-            GameTooltip:AddLine("Pas pris dans ce build", 0.5, 0.5, 0.5)
+            GameTooltip:AddLine(T("Pas pris dans ce build"), 0.5, 0.5, 0.5)
         end
         GameTooltip:Show()
     end)
@@ -137,7 +163,7 @@ local function getLine(tree, i)
 end
 
 local function drawTree(tree, data, index, ranks, finals, lastSort, levels)
-    tree.title:SetText(data.nom)
+    tree.title:SetText(D(data.nom))
     tree.headerIcon:SetTexture(icon(data.icone))
     for name, tex in pairs(tree.bg) do
         tex:SetTexture("Interface\\TalentFrame\\" .. data.fond .. "-" .. name)
@@ -203,13 +229,13 @@ local function drawTree(tree, data, index, ranks, finals, lastSort, levels)
     end
     for i = n + 1, #tree.lines do tree.lines[i]:Hide() end
 
-    tree.points:SetText(total .. " pt" .. (total > 1 and "s" or ""))
+    tree.points:SetText(T(total > 1 and "%d pts" or "%d pt", total))
 end
 
 -- Vue Talents --------------------------------------------------------------------
 
 local function refreshTalents(classData, spec, build, bi, bn)
-    buildButton.label:SetText(build and build.nom or "Aucun build")
+    buildButton.label:SetText(build and D(build.nom) or T("Aucun build"))
 
     local ordered = build and build.etapes and #build.etapes > 0
     local finals = {}
@@ -232,19 +258,19 @@ local function refreshTalents(classData, spec, build, bi, bn)
 
     if not build then
         levelText:SetText("")
-        infoText:SetText(GREY .. "Aucun build disponible pour cette spécialisation.|r")
+        infoText:SetText(GREY .. T("Aucun build disponible pour cette spécialisation.") .. "|r")
     elseif not ordered then
-        levelText:SetText(GOLD .. "Niveau 60|r")
-        infoText:SetText(GREY .. "Wowhead ne donne pas d'ordre pour ce build : voici la répartition finale au niveau 60.|r")
+        levelText:SetText(GOLD .. T("Niveau %d", 60) .. "|r")
+        infoText:SetText(GREY .. T("Wowhead ne donne pas d'ordre pour ce build : voici la répartition finale au niveau 60.") .. "|r")
     else
-        levelText:SetText(GOLD .. "Niveau " .. viewLevel .. "|r  " .. WHITE .. (viewLevel - 9) .. " points|r")
+        levelText:SetText(GOLD .. T("Niveau %d", viewLevel) .. "|r  " .. WHITE .. T("%d points", viewLevel - 9) .. "|r")
         local t
         for _, tr in ipairs(classData.arbres or {}) do
             for _, x in ipairs(tr.talents) do if x.sort == lastSort then t = x end end
         end
         if t then
-            infoText:SetText("Au niveau " .. viewLevel .. " : +1 point en |cff71d5ff" .. ns.SpellName(t.sort, t.nom) ..
-                "|r (" .. lastRank .. "/" .. t.rangMax .. ")")
+            infoText:SetText(T("Au niveau %d : +1 point en %s", viewLevel, "|cff71d5ff" .. ns.SpellName(t.sort, t.nom) .. "|r") ..
+                " (" .. lastRank .. "/" .. t.rangMax .. ")")
         else
             infoText:SetText("")
         end
@@ -253,12 +279,12 @@ local function refreshTalents(classData, spec, build, bi, bn)
     -- Où en est le personnage ?
     local spent, earned = ns.GetSpentTalentPoints()
     local level = UnitLevel("player") or 1
-    local line = "Ton personnage : niveau " .. level .. (spent and (", " .. spent .. "/" .. earned .. " points dépensés") or "")
+    local line = T("Ton personnage : niveau %d", level) .. (spent and T(", %d/%d points dépensés", spent, earned) or "")
     if ordered and spent and spent < earned then
         local _, nextSort = ns.RanksAt(build, spent + 1)
         for _, tr in ipairs(classData.arbres or {}) do
             for _, x in ipairs(tr.talents) do
-                if x.sort == nextSort then line = line .. "  " .. ORANGE .. "→ prochain : " .. ns.SpellName(x.sort, x.nom) .. "|r" end
+                if x.sort == nextSort then line = line .. "  " .. ORANGE .. T("→ prochain : %s", ns.SpellName(x.sort, x.nom)) .. "|r" end
             end
         end
     end
@@ -278,9 +304,8 @@ local function createBuildMenu(parent)
     arrow:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
     arrow:SetSize(20, 20)
     arrow:SetPoint("RIGHT", -3, 0)
-    local label = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    label:SetPoint("RIGHT", buildButton, "LEFT", -8, 0)
-    label:SetText("Build :")
+    buildLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    buildLabel:SetPoint("RIGHT", buildButton, "LEFT", -8, 0)
 
     buildMenu = CreateFrame("Frame", nil, parent)
     buildMenu:SetFrameStrata("FULLSCREEN_DIALOG")
@@ -320,7 +345,7 @@ local function createBuildMenu(parent)
                 buildMenu.items[i] = item
             end
             item.index = i
-            item.text:SetText((i == current and GOLD or WHITE) .. b.nom .. "|r")
+            item.text:SetText((i == current and GOLD or WHITE) .. D(b.nom) .. "|r")
             item:Show()
         end
         for i = #spec.builds + 1, #buildMenu.items do buildMenu.items[i]:Hide() end
@@ -334,23 +359,29 @@ local function createTalentsView()
     talentsView:SetPoint("TOPLEFT", 14, -64)
     talentsView:SetPoint("BOTTOMRIGHT", -14, 44)
 
-    createBuildMenu(talentsView)
+    -- Contenu à taille fixe, mis à l'échelle quand on redimensionne la fenêtre.
+    local tv = CreateFrame("Frame", nil, talentsView)
+    tv:SetSize(TALENTS_W, TALENTS_H)
+    tv:SetPoint("TOP")
+    talentsView.inner = tv
+
+    createBuildMenu(tv)
 
     trees = {}
     for i = 1, 3 do
-        local t = createTree(talentsView, i)
-        t:SetPoint("TOPLEFT", talentsView, "TOPLEFT", (i - 1) * (TREE_W + 8), -30)
+        local t = createTree(tv, i)
+        t:SetPoint("TOPLEFT", tv, "TOPLEFT", (i - 1) * (TREE_W + 8), -30)
         trees[i] = t
     end
 
     -- Barre de niveau.
-    levelText = talentsView:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    levelText:SetPoint("TOPLEFT", talentsView, "TOPLEFT", 0, -(30 + TREE_H + 12))
+    levelText = tv:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    levelText:SetPoint("TOPLEFT", tv, "TOPLEFT", 0, -(30 + TREE_H + 12))
 
-    slider = CreateFrame("Slider", nil, talentsView)
+    slider = CreateFrame("Slider", nil, tv)
     slider:SetOrientation("HORIZONTAL")
     slider:SetSize(480, 18)
-    slider:SetPoint("TOPLEFT", talentsView, "TOPLEFT", 170, -(30 + TREE_H + 10))
+    slider:SetPoint("TOPLEFT", tv, "TOPLEFT", 170, -(30 + TREE_H + 10))
     slider:SetMinMaxValues(10, 60)
     slider:SetValueStep(1)
     pcall(slider.SetObeyStepOnDrag, slider, true)
@@ -374,11 +405,11 @@ local function createTalentsView()
         self:SetValue(math.max(10, math.min(60, (viewLevel or 10) + delta)))
     end)
 
-    infoText = talentsView:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    infoText = tv:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     infoText:SetPoint("TOPLEFT", levelText, "BOTTOMLEFT", 0, -16)
     infoText:SetWidth(W - 40)
     infoText:SetJustifyH("LEFT")
-    playerText = talentsView:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    playerText = tv:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     playerText:SetPoint("TOPLEFT", infoText, "BOTTOMLEFT", 0, -6)
     playerText:SetWidth(W - 40)
     playerText:SetJustifyH("LEFT")
@@ -409,7 +440,7 @@ local function getItemRow(i)
     local row = itemRows[i]
     if row then return row end
     row = CreateFrame("Button", nil, content)
-    row:SetSize(620, 30)
+    row:SetSize(contentW, 30)
     row.icon = row:CreateTexture(nil, "ARTWORK")
     row.icon:SetSize(26, 26)
     row.icon:SetPoint("LEFT", 4, 0)
@@ -420,8 +451,20 @@ local function getItemRow(i)
     row:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
     row:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        if not pcall(GameTooltip.SetItemByID, GameTooltip, self.itemID) then
-            GameTooltip:SetText(ns.ItemName(self.itemID))
+        if self.itemID then
+            if not pcall(GameTooltip.SetItemByID, GameTooltip, self.itemID) then
+                GameTooltip:SetText(ns.ItemName(self.itemID))
+            end
+        elseif self.spellID then
+            if not pcall(GameTooltip.SetSpellByID, GameTooltip, self.spellID) then
+                GameTooltip:SetText(ns.SpellName(self.spellID, self.tipTitle))
+            end
+        else
+            GameTooltip:SetText(self.tipTitle or "")
+        end
+        if self.tipNote then
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddLine(self.tipNote, 0.25, 1, 0.25, true)
         end
         GameTooltip:Show()
     end)
@@ -436,10 +479,10 @@ local function getZoneRow(i)
     local row = zoneRows[i]
     if row then return row end
     row = CreateFrame("Frame", nil, content)
-    row:SetWidth(620)
+    row:SetWidth(contentW)
     row.text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     row.text:SetPoint("TOPLEFT", 0, 0)
-    row.text:SetWidth(530)
+    row.text:SetWidth(contentW - 90)
     row.text:SetJustifyH("LEFT")
     row.text:SetJustifyV("TOP")
     row.text:SetSpacing(2)
@@ -453,12 +496,13 @@ local function getZoneRow(i)
         linkBox:SetText(cmd)
         linkBox:SetCursorPosition(0)
         local how = ns.SetWaypoint(p.map, p.x, p.y, p.title)
+        local x, y = tostring(p.x), tostring(p.y)
         if how == "TomTom" then
-            ns.Print("point TomTom posé : " .. p.title .. " (" .. p.x .. ", " .. p.y .. ").")
+            ns.Print(T("point TomTom posé : %s (%s, %s).", p.title, x, y))
         elseif how == "carte" then
-            ns.Print("point posé sur ta carte : " .. p.title .. " (" .. p.x .. ", " .. p.y .. ").")
+            ns.Print(T("point posé sur ta carte : %s (%s, %s).", p.title, x, y))
         else
-            ns.Print(p.title .. " : " .. p.x .. ", " .. p.y .. ". Installe TomTom pour avoir une flèche ; la commande /way est en bas de la fenêtre (Ctrl+C).")
+            ns.Print(T("%s : %s, %s. Installe TomTom pour avoir une flèche ; la commande /way est en bas de la fenêtre (Ctrl+C).", p.title, x, y))
         end
     end)
     row.btn:SetScript("OnEnter", function(self)
@@ -466,13 +510,19 @@ local function getZoneRow(i)
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
         GameTooltip:SetText(p.title)
         GameTooltip:AddLine(ns.WayCommand(p.map, p.x, p.y, p.title), 1, 1, 1)
-        GameTooltip:AddLine(TomTom and "Clic : flèche TomTom vers ce lieu." or
-            "Clic : point sur la carte (TomTom conseillé pour la flèche).", 0.25, 1, 0.25)
+        GameTooltip:AddLine(TomTom and T("Clic : flèche TomTom vers ce lieu.") or
+            T("Clic : point sur la carte (TomTom conseillé pour la flèche)."), 0.25, 1, 0.25)
         GameTooltip:Show()
     end)
     row.btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
     zoneRows[i] = row
     return row
+end
+
+-- Nom de zone : en anglais, notre traduction (le client peut être en français) ; sinon le nom du jeu.
+local function zoneName(z)
+    if ns.GetLang() == "en" and ns.zonesEN and ns.zonesEN[z.nom] then return ns.zonesEN[z.nom] end
+    return ns.MapName(z.map, z.nom)
 end
 
 local function zoneVisible(z, faction)
@@ -495,15 +545,15 @@ local function refreshZones()
 
     local good = {}
     for _, z in ipairs(list) do
-        if level >= z.min and level <= z.max then table.insert(good, ns.MapName(z.map, z.nom)) end
+        if level >= z.min and level <= z.max then table.insert(good, zoneName(z)) end
     end
 
     local head = {
-        GOLD .. "Zones de montée en niveau" .. (faction and (" – " .. faction) or "") .. "|r",
-        GREY .. "Niveaux estimés par Wowhead (le jeu n'en donne pas). Bouton Point : flèche TomTom, sinon point sur la carte.|r",
-        (TomTom and (GREEN .. "TomTom détecté.|r") or (ORANGE .. "TomTom non détecté : la commande /way s'affiche en bas pour la copier.|r")),
+        GOLD .. T("Zones de montée en niveau") .. (faction and (" – " .. faction) or "") .. "|r",
+        GREY .. T("Niveaux estimés par Wowhead (le jeu n'en donne pas). Bouton Point : flèche TomTom, sinon point sur la carte.") .. "|r",
+        (TomTom and (GREEN .. T("TomTom détecté.") .. "|r") or (ORANGE .. T("TomTom non détecté : la commande /way s'affiche en bas pour la copier.") .. "|r")),
         " ",
-        GREEN .. "Pour ton niveau (" .. level .. ") : |r" .. (#good > 0 and table.concat(good, ", ") or (GREY .. "aucune zone listée|r")),
+        GREEN .. T("Pour ton niveau (%d) : ", level) .. "|r" .. (#good > 0 and table.concat(good, ", ") or (GREY .. T("aucune zone listée") .. "|r")),
         " ",
     }
     text:SetText(table.concat(head, "\n"))
@@ -517,6 +567,7 @@ local function refreshZones()
         y = y - (gap or 0)
         row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, y)
         row.text:SetText(str)
+        row.btn:SetText(T("Point"))
         if point then row.btn.point = point; row.btn:Show() else row.btn:Hide() end
         local h = math.max(row.text:GetStringHeight(), point and 18 or 0)
         row:SetHeight(h)
@@ -525,37 +576,39 @@ local function refreshZones()
     end
 
     for _, z in ipairs(list) do
-        local nom = ns.MapName(z.map, z.nom)
+        local nom = zoneName(z)
         local col, tag = WHITE, ""
-        if level >= z.min and level <= z.max then col, tag = GREEN, "  (ton niveau)"
+        if level >= z.min and level <= z.max then col, tag = GREEN, "  " .. T("(ton niveau)")
         elseif level > z.max then col = GREY
         elseif level < z.min - 5 then col = ORANGE end
-        local camp = z.camp or "Contestée"
-        if z.nouveau then camp = camp .. ", nouvelle zone Forever" end
-        addRow(col .. nom .. "|r  " .. GOLD .. "niv. " .. z.min .. "–" .. z.max .. "|r  " .. GREY .. "(" .. camp .. ")|r" .. GREEN .. tag .. "|r", nil, 8)
+        local camp = z.camp or T("Contestée")
+        if z.nouveau then camp = camp .. T(", nouvelle zone Forever") end
+        addRow(col .. nom .. "|r  " .. GOLD .. T("niv. %d–%d", z.min, z.max) .. "|r  " .. GREY .. "(" .. camp .. ")|r" .. GREEN .. tag .. "|r", nil, 8)
 
-        local acces = (faction and z.acces[faction]) or z.acces.tous
+        local ZT = ns.ZT or function(s) return s end
+        local acces = ZT((faction and z.acces[faction]) or z.acces.tous)
         if not acces then
-            acces = z.acces.Alliance and z.acces.Horde and ("Alliance : " .. z.acces.Alliance .. " Horde : " .. z.acces.Horde)
-                or z.acces.Alliance or z.acces.Horde
+            acces = z.acces.Alliance and z.acces.Horde and T("Alliance : %s Horde : %s", ZT(z.acces.Alliance), ZT(z.acces.Horde))
+                or ZT(z.acces.Alliance or z.acces.Horde)
         end
-        if acces then addRow("     Accès : " .. acces) end
+        if acces then addRow("     " .. T("Accès : ") .. acces) end
 
         local shown = 0
         for _, h in ipairs(z.hubs or {}) do
             if not h.f or not faction or h.f == faction then
                 local map = h.map or z.map
-                addRow("     • " .. h.nom .. GREY .. "  " .. h.x .. ", " .. h.y .. "|r",
-                    { map = map, x = h.x, y = h.y, title = h.nom })
+                local hubNom = ZT(h.nom)
+                addRow("     • " .. hubNom .. GREY .. "  " .. h.x .. ", " .. h.y .. "|r",
+                    { map = map, x = h.x, y = h.y, title = hubNom })
                 shown = shown + 1
             end
         end
         if not z.hubs and z.map then
-            addRow("     • Centre de la zone" .. GREY .. "  50, 50|r", { map = z.map, x = 50, y = 50, title = nom })
+            addRow("     • " .. T("Centre de la zone") .. GREY .. "  50, 50|r", { map = z.map, x = 50, y = 50, title = nom })
         elseif z.nouveau then
-            addRow("     " .. GREY .. "Coordonnées pas encore connues pour cette nouvelle zone.|r")
+            addRow("     " .. GREY .. T("Coordonnées pas encore connues pour cette nouvelle zone.") .. "|r")
         elseif shown == 0 then
-            addRow("     " .. GREY .. "Pas de camp de ta faction dans cette zone.|r")
+            addRow("     " .. GREY .. T("Pas de camp de ta faction dans cette zone.") .. "|r")
         end
     end
 
@@ -564,12 +617,183 @@ local function refreshZones()
     local last = getZoneRow(n)
     last:ClearAllPoints()
     last:SetPoint("TOPLEFT", content, "TOPLEFT", 0, y)
-    last.text:SetText(GREY .. "Niveau 60 : Mont Hyjal (nouvelle zone de fin de jeu). Source : " .. ZONES_URL .. "|r")
+    last.text:SetText(GREY .. T("Niveau 60 : Mont Hyjal (nouvelle zone de fin de jeu). Source : %s", ZONES_URL) .. "|r")
     last.btn:Hide()
     last:SetHeight(last.text:GetStringHeight())
     last:Show()
     y = y - last:GetHeight()
     content:SetHeight(-y + 10)
+end
+
+-- Rotation et Enchants & compos (lignes avec icônes) ------------------------------
+
+local function spellIcon(id, fallback)
+    if id then
+        local fn = (C_Spell and C_Spell.GetSpellTexture) or GetSpellTexture
+        if fn then
+            local ok, tex = pcall(fn, id)
+            if ok and tex then return tex end
+        end
+    end
+    return icon(fallback)
+end
+
+local function inlineIcon(tex, size)
+    size = size or 20
+    return "|T" .. tostring(tex) .. ":" .. size .. ":" .. size .. ":0:0:64:64:5:59:5:59|t"
+end
+
+-- Le niveau est-il dans la tranche [a, b] ? `strict` : b exclu même à 60 (quand une tranche « 60 » existe).
+local function inBracket(level, a, b, strict)
+    if a == b then return level == a end
+    return level >= a and (level < b or (not strict and b == 60 and level == 60))
+end
+
+local function bracketTitle(a, b)
+    return (a == b) and T("Niveau %d", a) or T("Niveaux %d à %d", a, b)
+end
+
+-- Empile des lignes (texte ou icône) sous le texte d'en-tête.
+local function newStack(y)
+    local S = { y = y, ni = 0, nt = 0 }
+    function S.line(str, gap)
+        S.nt = S.nt + 1
+        local row = getZoneRow(S.nt)
+        row:ClearAllPoints()
+        S.y = S.y - (gap or 0)
+        row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, S.y)
+        row.text:SetText(str)
+        row.btn:Hide()
+        local h = row.text:GetStringHeight()
+        row:SetHeight(h)
+        row:Show()
+        S.y = S.y - h - 3
+    end
+    function S.iconRow(tex, str, tip)
+        S.ni = S.ni + 1
+        local row = getItemRow(S.ni)
+        row:ClearAllPoints()
+        row:SetPoint("TOPLEFT", content, "TOPLEFT", 12, S.y)
+        row:SetHeight(28)
+        row.icon:SetTexture(tex)
+        row.text:SetText(str)
+        row.itemID, row.spellID = tip.item, tip.spell
+        row.tipTitle, row.tipNote = tip.title, tip.note
+        row:Show()
+        S.y = S.y - 29
+    end
+    return S
+end
+
+local function untranslatedNote(lines)
+    if ns.GetLang() == "en" then
+        table.insert(lines, GREY .. T("Les textes de cette section ne sont pas encore traduits.") .. "|r")
+    end
+end
+
+local function refreshRotation(classData, spec)
+    local _, specKey = ns.GetSpec(classData)
+    local rot = ns.rotations and ns.rotations[classData.token]
+    local brackets = {}
+    if rot then
+        for _, b in ipairs(rot.debut or {}) do table.insert(brackets, b) end
+        for _, b in ipairs(rot[specKey] or {}) do table.insert(brackets, b) end
+    end
+    local level = UnitLevel("player") or 1
+
+    local lines = {
+        GOLD .. T("Rotation – %s", D(spec.nom)) .. "|r",
+        GREY .. T("Du haut vers le bas : lance le premier sort disponible. Survole une icône pour le détail.") .. "|r",
+    }
+    untranslatedNote(lines)
+    for _, b in ipairs(brackets) do
+        if inBracket(level, b[1], b[2]) then
+            local chain = {}
+            for i = 3, #b do table.insert(chain, inlineIcon(spellIcon(b[i].s, b[i].ic), 24)) end
+            table.insert(lines, " ")
+            table.insert(lines, GREEN .. T("Ton niveau (%d) : ", level) .. "|r" .. table.concat(chain, GREY .. "  >  |r"))
+            break
+        end
+    end
+    text:SetText(table.concat(lines, "\n"))
+
+    local S = newStack(-(text:GetStringHeight() + 8))
+    if #brackets == 0 then
+        S.line(GREY .. T("Pas encore de rotation écrite pour cette spécialisation.") .. "|r", 6)
+    end
+    for _, b in ipairs(brackets) do
+        local title = bracketTitle(b[1], b[2])
+        if inBracket(level, b[1], b[2]) then
+            S.line(GREEN .. "> " .. title .. "  " .. T("(ton niveau)") .. "|r", 12)
+        else
+            S.line(GOLD .. title .. "|r", 12)
+        end
+        for i = 3, #b do
+            local e = b[i]
+            local name = e.s and ns.SpellName(e.s, e.n) or e.n
+            S.iconRow(spellIcon(e.s, e.ic),
+                WHITE .. (i - 2) .. ".|r  |cff71d5ff" .. name .. "|r" .. (e.t and (GREY .. "  –  " .. e.t .. "|r") or ""),
+                { spell = e.s, title = name })
+        end
+        for _, n in ipairs(b.notes or {}) do S.line("     " .. ORANGE .. "•|r " .. n) end
+    end
+    content:SetHeight(-S.y + 10)
+end
+
+local function refreshEnchants(classData, spec)
+    local _, specKey = ns.GetSpec(classData)
+    local key = ns.enchantsSpecs and ns.enchantsSpecs[classData.token] and ns.enchantsSpecs[classData.token][specKey]
+    local P = key and ns.enchantsProfils and ns.enchantsProfils[key]
+    local level = UnitLevel("player") or 1
+
+    local lines = { GOLD .. T("Enchantements et consommables (%s)", D(spec.nom)) .. "|r" }
+    if P then
+        table.insert(lines, GREY .. T("Profil : %s. Bases de WoW Classic : WoW Forever ajoute des recettes, vérifie sur Wowhead.", P.nom) .. "|r")
+    end
+    untranslatedNote(lines)
+    text:SetText(table.concat(lines, "\n"))
+
+    local S = newStack(-(text:GetStringHeight() + 8))
+    if not P then
+        S.line(GREY .. T("Pas encore de liste pour cette spécialisation.") .. "|r", 6)
+        content:SetHeight(-S.y + 10)
+        return
+    end
+
+    local function enchantRows(list)
+        for _, e in ipairs(list) do
+            local tex = e.s and spellIcon(e.s, e.ic or "Trade_Engraving") or icon(e.ic or "Trade_Engraving")
+            S.iconRow(tex, WHITE .. (D(e.e) or "") .. "|r  |cff1eff00" .. e.n .. "|r" ..
+                (e.t and (GREY .. "  –  " .. e.t .. "|r") or ""), { spell = e.s, title = e.n, note = e.t })
+        end
+    end
+    local function section(title, current)
+        if current then S.line(GREEN .. "> " .. title .. "  " .. T("(ton niveau)") .. "|r", 12)
+        else S.line(GOLD .. title .. "|r", 12) end
+    end
+
+    section(T("Enchantements pendant la montée"), level < 60)
+    enchantRows(P.montee or {})
+    section(T("Enchantements au niveau 60"), level >= 60)
+    enchantRows(P.max or {})
+
+    S.line(GOLD .. T("Consommables par tranche de niveau") .. "|r", 16)
+    local hasMax = false
+    for _, b in ipairs(P.compos or {}) do if b[1] == b[2] then hasMax = true end end
+    for _, b in ipairs(P.compos or {}) do
+        local title = bracketTitle(b[1], b[2])
+        if inBracket(level, b[1], b[2], hasMax) then
+            S.line("  " .. GREEN .. "> " .. title .. "  " .. T("(ton niveau)") .. "|r", 6)
+        else
+            S.line("  " .. WHITE .. title .. "|r", 6)
+        end
+        for i = 3, #b do
+            local c = b[i]
+            S.iconRow(itemIcon({ id = c.i }), "|cffffffff" .. ns.ItemName(c.i, c.n) .. "|r" ..
+                (c.t and (GREY .. "  –  " .. c.t .. "|r") or ""), { item = c.i })
+        end
+    end
+    content:SetHeight(-S.y + 10)
 end
 
 local function refreshScrollView(classData, spec)
@@ -579,22 +803,33 @@ local function refreshScrollView(classData, spec)
         refreshZones()
         return
     end
+    if currentTab == "conseils" and conseilsMode() == "rotation" then
+        refreshRotation(classData, spec)
+        return
+    end
+    if currentTab == "stuff" and subMode("stuff") == "enchants" then
+        refreshEnchants(classData, spec)
+        return
+    end
     local lines = {}
     if currentTab == "stuff" then
-        table.insert(lines, GOLD .. "Priorité des statistiques (" .. spec.nom .. ")|r")
-        if not spec.stats or #spec.stats == 0 then table.insert(lines, GREY .. "  Pas encore disponible.|r") end
+        table.insert(lines, GOLD .. T("Priorité des statistiques (%s)", D(spec.nom)) .. "|r")
+        if not spec.stats or #spec.stats == 0 then table.insert(lines, GREY .. T("  Pas encore disponible.") .. "|r") end
         for i, s in ipairs(spec.stats or {}) do table.insert(lines, "  " .. i .. ". " .. ns.Texte(s)) end
         table.insert(lines, " ")
-        table.insert(lines, GOLD .. "Meilleur équipement (BiS)|r")
+        table.insert(lines, GOLD .. T("Meilleur équipement (BiS)") .. "|r")
         if not spec.objets or #spec.objets == 0 then
-            table.insert(lines, GREY .. "  Wowhead n'a pas encore rempli sa liste BiS pour WoW Forever. " ..
-                "Elle apparaîtra ici automatiquement dès qu'elle sera publiée.|r")
+            table.insert(lines, GREY .. "  " .. T("Wowhead n'a pas encore rempli sa liste BiS pour WoW Forever. " ..
+                "Elle apparaîtra ici automatiquement dès qu'elle sera publiée.") .. "|r")
         end
     else
         local liste = (ns.conseils and ns.conseils[classData.token]) or {}
+        if ns.GetLang() == "en" and ns.conseilsEN and ns.conseilsEN[classData.token] then
+            liste = ns.conseilsEN[classData.token]
+        end
         if #liste == 0 then
-            table.insert(lines, GREY .. "Pas encore de conseils écrits pour cette classe. " ..
-                "Le lien en bas de la fenêtre ouvre le guide Wowhead de ta spécialisation.|r")
+            table.insert(lines, GREY .. T("Pas encore de conseils écrits pour cette classe. " ..
+                "Le lien en bas de la fenêtre ouvre le guide Wowhead de ta spécialisation.") .. "|r")
         end
         local level = UnitLevel("player") or 1
         for i, c in ipairs(liste) do
@@ -603,19 +838,21 @@ local function refreshScrollView(classData, spec)
                 -- Titre de catégorie : ligne vide avant (sauf en haut), en doré.
                 if i > 1 then table.insert(lines, " ") end
                 local a, b = titre:match("(%d+) à (%d+)")
+                if not a then a, b = titre:match("(%d+) to (%d+)") end
                 a, b = tonumber(a), tonumber(b)
+                local shown = (a and b) and T("Niveaux %d à %d", a, b) or D(titre)
                 if a and b and level >= a and (level < b or (b == 60 and level == 60)) then
-                    table.insert(lines, GREEN .. "> " .. titre .. "  (ton niveau)|r")
+                    table.insert(lines, GREEN .. "> " .. shown .. "  " .. T("(ton niveau)") .. "|r")
                 else
-                    table.insert(lines, GOLD .. titre .. "|r")
+                    table.insert(lines, GOLD .. shown .. "|r")
                 end
             else
                 table.insert(lines, "   • " .. c)
             end
         end
         table.insert(lines, " ")
-        table.insert(lines, GREY .. "Talents, stats et BiS : " .. (classData.source or "?") ..
-            ", mis à jour le " .. (classData.majLe or "?") .. ".|r")
+        table.insert(lines, GREY .. T("Talents, stats et BiS : %s, mis à jour le %s.",
+            D(classData.source or "?"), classData.majLe or "?") .. "|r")
         table.insert(lines, GREY .. "AideClasse v" .. ns.version .. "|r")
     end
     text:SetText(table.concat(lines, "\n"))
@@ -632,10 +869,12 @@ local function refreshScrollView(classData, spec)
             row:ClearAllPoints()
             row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, y)
             row.itemID = o.id
+            row.spellID, row.tipTitle, row.tipNote = nil, nil, nil
+            row:SetHeight(30)
             row.icon:SetTexture(itemIcon(o))
-            local status = itemIsEquipped(o.id) and (GREEN .. "porté|r") or (ORANGE .. "à chercher|r")
+            local status = itemIsEquipped(o.id) and (GREEN .. T("porté") .. "|r") or (ORANGE .. T("à chercher") .. "|r")
             local source = (o.source and o.source ~= "") and (GREY .. "  –  " .. ns.Texte(o.source) .. "|r") or ""
-            row.text:SetText(WHITE .. (o.emplacement or "") .. "|r  " .. GREY .. (o.rang or "") .. "|r  " ..
+            row.text:SetText(WHITE .. (D(o.emplacement) or "") .. "|r  " .. GREY .. (D(o.rang) or "") .. "|r  " ..
                 "|cffa335ee" .. ns.ItemName(o.id, o.nom) .. "|r  [" .. status .. "]" .. source)
             row:Show()
             y = y - 32
@@ -663,6 +902,29 @@ local function createFrame()
 
     frame.title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     frame.title:SetPoint("TOP", frame, "TOP", 0, -5)
+
+    -- Petit bouton de langue FR / EN, en haut à droite à côté de la croix.
+    langButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    langButton:SetSize(30, 18)
+    if frame.CloseButton then
+        langButton:SetPoint("RIGHT", frame.CloseButton, "LEFT", 0, 0)
+    else
+        langButton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -26, -2)
+    end
+    langButton:SetNormalFontObject("GameFontNormalSmall")
+    langButton:SetHighlightFontObject("GameFontHighlightSmall")
+    langButton:SetFrameLevel(frame:GetFrameLevel() + 5)
+    langButton:SetScript("OnClick", function(self)
+        ns.ToggleLang()
+        if self:IsMouseOver() and self:GetScript("OnEnter") then self:GetScript("OnEnter")(self) end
+    end)
+    langButton:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
+        GameTooltip:SetText(T("Changer de langue"))
+        GameTooltip:AddLine(T("Interface en français. Clic : passer en anglais."), 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    langButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
     for i, t in ipairs(TABS) do
         local b = makeButton(frame, t.label, 90)
@@ -697,67 +959,161 @@ local function createFrame()
     scrollView = CreateFrame("Frame", nil, frame)
     scrollView:SetPoint("TOPLEFT", 14, -64)
     scrollView:SetPoint("BOTTOMRIGHT", -14, 44)
-    -- Sous-onglets de Conseils : Classe / Zones d'xp.
+    -- Sous-onglets : Conseils (Classe / Rotation / Zones d'xp) et Stuff (Équipement / Enchants & compos).
     subBar = CreateFrame("Frame", nil, scrollView)
     subBar:SetPoint("TOPLEFT"); subBar:SetPoint("TOPRIGHT"); subBar:SetHeight(24)
-    for i, m in ipairs({ { key = "classe", label = "Classe" }, { key = "zones", label = "Zones d'xp" } }) do
-        local b = makeButton(subBar, m.label, 110)
-        b:SetPoint("TOPLEFT", subBar, "TOPLEFT", (i - 1) * 114, 0)
-        b:SetScript("OnClick", function()
-            ns.db.conseilsMode = m.key
-            scroll:SetVerticalScroll(0)
-            ns.Refresh()
-        end)
-        subButtons[m.key] = b
+    for tab, def in pairs(SUBTABS) do
+        subButtons[tab] = {}
+        for i, m in ipairs(def.modes) do
+            local b = makeButton(subBar, m.label, 130)
+            b:SetPoint("TOPLEFT", subBar, "TOPLEFT", (i - 1) * 134, 0)
+            b:SetScript("OnClick", function()
+                ns.db[def.db] = m.key
+                scroll:SetVerticalScroll(0)
+                ns.Refresh()
+            end)
+            b:Hide()
+            subButtons[tab][m.key] = b
+        end
     end
 
     scroll = CreateFrame("ScrollFrame", "AideClasseScroll", scrollView, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT")
     scroll:SetPoint("BOTTOMRIGHT", -20, 0)
     content = CreateFrame("Frame", nil, scroll)
-    content:SetSize(630, 10)
+    content:SetSize(contentW + 10, 10)
     scroll:SetScrollChild(content)
     text = content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     text:SetPoint("TOPLEFT")
-    text:SetWidth(620)
+    text:SetWidth(contentW)
     text:SetJustifyH("LEFT")
     text:SetJustifyV("TOP")
     text:SetSpacing(3)
 
     -- Lien Wowhead à copier (Ctrl+C).
-    local label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    label:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 16, 16)
-    label:SetText("Lien Wowhead :")
+    linkLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    linkLabel:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 16, 16)
     linkBox = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
     linkBox:SetAutoFocus(false)
     linkBox:SetHeight(20)
-    linkBox:SetPoint("LEFT", label, "RIGHT", 10, 0)
-    linkBox:SetPoint("RIGHT", frame, "RIGHT", -16, 0)
+    linkBox:SetPoint("LEFT", linkLabel, "RIGHT", 10, 0)
+    linkBox:SetPoint("RIGHT", frame, "RIGHT", -30, 0)
     linkBox:SetFontObject("GameFontHighlightSmall")
     linkBox:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
     linkBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
     linkBox:SetScript("OnTextChanged", function(self, userInput)
         if userInput then self:SetText(self.url or ""); self:HighlightText() end
     end)
+
+    -- Redimensionnement : poignée en bas à droite (clic droit = taille par défaut).
+    frame:SetResizable(true)
+    if frame.SetResizeBounds then
+        frame:SetResizeBounds(MIN_W, MIN_H, MAX_W, MAX_H)
+    else
+        frame:SetMinResize(MIN_W, MIN_H)
+        frame:SetMaxResize(MAX_W, MAX_H)
+    end
+    local grip = CreateFrame("Button", nil, frame)
+    grip:SetSize(16, 16)
+    grip:SetPoint("BOTTOMRIGHT", -6, 6)
+    grip:SetFrameLevel(frame:GetFrameLevel() + 10)
+    grip:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    grip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+    grip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+    grip:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    grip:SetScript("OnMouseDown", function(_, button)
+        if button == "LeftButton" then
+            if buildMenu then buildMenu:Hide() end
+            frame:StartSizing("BOTTOMRIGHT")
+        end
+    end)
+    grip:SetScript("OnMouseUp", function(_, button)
+        frame:StopMovingOrSizing()
+        if button == "RightButton" then ns.ResetSize() return end
+        if ns.db then ns.db.taille = { math.floor(frame:GetWidth() + 0.5), math.floor(frame:GetHeight() + 0.5) } end
+        ns.Refresh()
+    end)
+    grip:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(T("Redimensionner"))
+        GameTooltip:AddLine(T("Glisser : changer la taille de la fenêtre."), 1, 1, 1)
+        GameTooltip:AddLine(T("Clic droit : taille par défaut."), 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    grip:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+    frame:SetScript("OnSizeChanged", function() ns.Layout() end)
+    local t = ns.db and ns.db.taille
+    if t and t[1] and t[2] then
+        frame:SetSize(math.max(MIN_W, math.min(MAX_W, t[1])), math.max(MIN_H, math.min(MAX_H, t[2])))
+    end
+    ns.Layout()
+end
+
+-- Adapte le contenu à la taille actuelle de la fenêtre.
+function ns.Layout()
+    if not frame then return end
+    local fw, fh = frame:GetWidth(), frame:GetHeight()
+    -- Talents : on garde la mise en page et on change l'échelle.
+    local s = math.min((fw - 28) / TALENTS_W, (fh - 108) / TALENTS_H)
+    talentsView.inner:SetScale(math.max(0.5, s))
+    -- Stuff / Conseils : le texte suit la largeur.
+    contentW = fw - 80
+    content:SetWidth(contentW + 10)
+    text:SetWidth(contentW)
+    for _, r in ipairs(itemRows) do r:SetWidth(contentW) end
+    for _, r in ipairs(zoneRows) do r:SetWidth(contentW); r.text:SetWidth(contentW - 90) end
+end
+
+function ns.ResetSize()
+    if ns.db then ns.db.taille = nil end
+    if not frame then return end
+    frame:SetSize(W, H)
+    ns.Layout()
+    ns.Refresh()
+end
+
+-- Textes fixes de la fenêtre, à remettre quand la langue change.
+local function updateStaticTexts()
+    langButton:SetText(ns.GetLang() == "en" and "EN" or "FR")
+    for _, t in ipairs(TABS) do tabButtons[t.key]:SetText(T(t.label)) end
+    for tab, def in pairs(SUBTABS) do
+        for _, m in ipairs(def.modes) do subButtons[tab][m.key]:SetText(T(m.label)) end
+    end
+    buildLabel:SetText(T("Build :"))
+    linkLabel:SetText(T("Lien Wowhead :"))
+end
+
+function ns.OnLanguageChanged()
+    if buildMenu then buildMenu:Hide() end
+    ns.Refresh()
 end
 
 function ns.Refresh()
     if not frame or not frame:IsShown() then return end
+    updateStaticTexts()
     local classData = ns.GetClassData()
-    frame.title:SetText("AideClasse" .. (classData and (" – " .. classData.nom) or ""))
+    frame.title:SetText("AideClasse" .. (classData and (" – " .. D(classData.nom)) or ""))
     for key, b in pairs(tabButtons) do
         if key == currentTab then b:Disable() else b:Enable() end
     end
 
-    -- Barre Classe / Zones d'xp, seulement dans Conseils.
+    -- Barre de sous-onglets, dans Conseils et Stuff.
     local mode = conseilsMode()
     scroll:ClearAllPoints()
     scroll:SetPoint("BOTTOMRIGHT", -20, 0)
-    if currentTab == "conseils" then
+    if SUBTABS[currentTab] then
         subBar:Show()
         scroll:SetPoint("TOPLEFT", 0, -30)
-        for key, b in pairs(subButtons) do
-            if key == mode then b:Disable() else b:Enable() end
+        local current = subMode(currentTab)
+        for tab, buttons in pairs(subButtons) do
+            for key, b in pairs(buttons) do
+                if tab ~= currentTab then b:Hide()
+                else
+                    b:Show()
+                    if key == current then b:Disable() else b:Enable() end
+                end
+            end
         end
     else
         subBar:Hide()
@@ -781,8 +1137,8 @@ function ns.Refresh()
     if not classData then
         talentsView:Hide(); scrollView:Show()
         for _, b in ipairs(specButtons) do b:Hide() end
-        text:SetText(GOLD .. (UnitClass("player") or "?") .. "|r : pas encore de données pour cette classe.\n\n" ..
-            "Les données arrivent avec la mise à jour automatique depuis Wowhead.")
+        text:SetText(T("%s : pas encore de données pour cette classe.\n\nLes données arrivent avec la mise à jour automatique depuis Wowhead.",
+            GOLD .. (UnitClass("player") or "?") .. "|r"))
         return
     end
 
@@ -799,7 +1155,7 @@ function ns.Refresh()
                 frame.specLabel:ClearAllPoints()
                 frame.specLabel:SetPoint("RIGHT", b, "LEFT", -10, 0)
             end
-            b.key, b.nom = key, s.nom
+            b.key, b.nom = key, D(s.nom)
             b.icon:SetTexture(icon(s.icone))
             b.icon:SetDesaturated(key ~= specKey)
             b.icon:SetAlpha(key == specKey and 1 or 0.6)
@@ -809,7 +1165,7 @@ function ns.Refresh()
             b:Hide()
         end
     end
-    frame.specLabel:SetText(spec.nom)
+    frame.specLabel:SetText(D(spec.nom))
 
     local build, bi, bn = ns.GetBuild(classData)
     if currentTab == "talents" then
@@ -852,7 +1208,7 @@ local function onItemTooltip(tooltip, itemID)
     for _, spec in pairs(classData.specs) do
         for _, o in ipairs(spec.objets or {}) do
             if o.id == itemID then
-                tooltip:AddLine("AideClasse : " .. (o.rang or "BiS") .. " " .. spec.nom .. " (" .. (o.emplacement or "") .. ")", 0.58, 0.51, 0.79)
+                tooltip:AddLine(T("AideClasse : %s %s (%s)", D(o.rang or "BiS"), D(spec.nom), D(o.emplacement or "")), 0.58, 0.51, 0.79)
             end
         end
     end

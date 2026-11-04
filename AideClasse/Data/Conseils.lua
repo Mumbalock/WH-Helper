@@ -41,16 +41,6 @@ ns.conseils.WARRIOR = {
     "Témérité au niveau 50.",
     "Armes à viser : Épée du vainqueur (Souilles de Tranchebauge), puis Lame de rossée (quête de Maraudon).",
 
-    "## Rotation",
-    "Armes : Ivresse de la victoire sous 90 % > Pourfendre > Fulgurance > Frappe mortelle > Heurtoir > Frappe héroïque.",
-    "Frappe héroïque seulement au-dessus de 40 de rage : elle supprime la rage de ton coup blanc.",
-    "Armes en solo : évite Exécution, garde plutôt ta rage pour le monstre suivant.",
-    "Armes contre plusieurs : accumule de la rage, Attaques circulaires + Frappe mortelle, puis Tourbillon.",
-    "Fureur : Sanguinaire, Pourfendre si le monstre vivra assez, Exécution pour finir, Enchaînement au-dessus de 60 de rage.",
-    "Protection : Maîtrise du blocage, Vengeance, Heurtoir de bouclier si tu l'as, Frappe héroïque au-dessus de 30 de rage.",
-    "Plusieurs monstres : Cri démoralisant + Coup de tonnerre réduisent leurs dégâts de 30 à 40 %.",
-    "Contre les lanceurs de sorts : Coup de bouclier, pour les couper et générer de la rage.",
-
     "## Talents et sorts à apprendre",
     "Armes : Fulgurance améliorée, Bloodthrill, Heurtoir amélioré, Frappe mortelle et Enrager sont les gros paliers.",
     "Armes : n'utilise pas Heurtoir avant d'avoir Heurtoir amélioré.",
@@ -94,16 +84,6 @@ ns.conseils.PALADIN = {
     "Ta monture est gratuite (Tome de noblesse) : garde l'or pour tes sorts ou une bonne arme.",
     "Marteau de courroux (44) et Colère divine (50) : à sauter sauf talent ou donjons de morts-vivants.",
     "Retarde Unsealed Wrath : il coûte de la mana pour peu de dégâts.",
-
-    "## Rotation",
-    "Avant le pull : Sceau du Croisé puis Jugement sur les cibles qui vont durer, puis Sceau d'autorité.",
-    "Vindicte : garde ton sceau, Jugement et Frappe sacrée à chaque recharge.",
-    "Marteau de courroux sous 20 % de vie, Exorcisme sur morts-vivants et démons.",
-    "Consécration seulement si la mana le permet.",
-    "Étourdis (Marteau de la justice ou Repentir) puis Jugement : Sceau d'autorité fait double dégâts.",
-    "Avec Twist of Light : alterne Sceau d'autorité et Sceau de piété à chaque coup d'arme.",
-    "Protection : Fureur vertueuse et Aura de vindicte avant le combat, Consécration et Bouclier sacré posés d'avance.",
-    "Règle des 5 secondes : Jugement est hors temps de recharge global, lance-le avec Frappe sacrée.",
 
     "## Talents et sorts à apprendre",
     "Vindicte : Bénédiction, Poursuite de la justice, Sceau d'autorité, puis Sanctified Judgement (mana).",
@@ -150,14 +130,6 @@ ns.conseils.HUNTER = {
     "## Niveaux 40 à 60",
     "Salve au niveau 40 : ta zone devient bien plus simple.",
 
-    "## Rotation",
-    "Marque du chasseur > Morsure de serpent si le combat dure > Tir des arcanes.",
-    "Avec Summon Hawk : Tir des arcanes seulement une rotation sur trois.",
-    "Kite avec Trait de choc, Coupure d'ailes et Piège givrant.",
-    "Zone avant 40 : Piège explosif au corps à corps, puis Flèches multiples.",
-    "Zone après 40 : Flèches multiples jusqu'à 4 cibles, sinon Salve sur toute sa durée.",
-    "Survie : garde Attaque du raptor en file, Morsure de la mangouste dès qu'elle s'allume.",
-
     "## Talents et sorts à apprendre",
     "Bête : remplis l'arbre Maîtrise des bêtes de haut en bas, puis Précision.",
     "Pas de Loup solitaire en montée : tu as besoin du familier.",
@@ -198,12 +170,6 @@ ns.conseils.ROGUE = {
 
     "## Niveaux 40 à 60",
     "Monture au niveau 40 : prévois l'or avec un métier de récolte ou le Vol à la tire.",
-
-    "## Rotation",
-    "Combat : Attaque pernicieuse en boucle, Éviscération pour achever.",
-    "Débiter seulement si un autre monstre est à côté.",
-    "Finesse : Embuscade, puis Hémorragie (ou Attaque pernicieuse), Éviscération pour achever.",
-    "Riposte : hors temps de recharge global, peu chère, désarme 6 s.",
 
     "## Talents et sorts à apprendre",
     "Combat : Riposte, puis Attaques impitoyables, Réflexes éclair et Déviation.",
@@ -254,16 +220,6 @@ ns.conseils.PRIEST = {
     "Discipline : vers le niveau 41, les sorts dépassent la baguette (Flammes sacrées, Pénitence, Châtiment).",
     "Sacré : Soins supérieurs au niveau 40, Prière de guérison vers 40-45.",
 
-    "## Rotation",
-    "Garde Mot de pouvoir : Robustesse, Feu intérieur et Esprit divin.",
-    "Solo : Bouclier, Mot de l'ombre : Douleur ou Attaque mentale, puis baguette.",
-    "Discipline : ouvre avec Pénitence si personne d'autre ne vise le monstre.",
-    "Ombre : Attaque mentale, Mot de l'ombre : Douleur, Fouet mental si la mana le permet, baguette pour finir.",
-    "Ombre contre plusieurs : Mot de l'ombre : Douleur sur chaque cible.",
-    "Inutile de remettre un DoT sur un monstre presque mort.",
-    "Donjon : Bouclier et Rénovation sur le tank, Soins, Soins rapides en urgence.",
-    "Oubli si tu prends l'aggro.",
-
     "## Talents et sorts à apprendre",
     "Règle des 5 secondes : la mana ne remonte qu'après 5 s sans sort, sauf avec Méditation.",
     "Finir à la baguette ne remet pas ce compteur à zéro.",
@@ -311,14 +267,6 @@ ns.conseils.SHAMAN = {
     "Salve de guérison au niveau 40, avec Remous pour Restauration.",
     "Totem de grâce aérienne au niveau 42.",
 
-    "## Rotation",
-    "Garde Arme Langue de feu et Bouclier de foudre (ou Bouclier d'eau) entre chaque pull.",
-    "Tire avec Éclair ou Horion de flammes, puis garde Horion de flammes sur la cible.",
-    "Frappe-tempête si tu l'as, Horion de terre pour achever.",
-    "Contre plusieurs : Horion de flammes sur chacun et Nova de feu. Elle génère beaucoup de menace.",
-    "Mana basse : arrête les horions et laisse tes coups blancs faire le travail.",
-    "Garde le rang 1 d'Horion de terre sur ta barre : une interruption pas chère.",
-
     "## Talents et totems",
     "Spellhance (équipement de lanceur de sorts + talents Amélioration) : la variante la plus forte.",
     "Spellhance : d'abord Restauration (Esprit éveillé, Bouclier d'eau), puis Amélioration.",
@@ -362,15 +310,6 @@ ns.conseils.MAGE = {
     "## Niveaux 40 à 60",
     "Portails au niveau 40 (50 pour les dernières villes) : ils se revendent aux joueurs.",
     "Arcane : vise Arcane Power, le dernier talent de l'arbre.",
-
-    "## Rotation",
-    "Arcane : Déflagration des arcanes 1 ou 2 fois, puis Projectiles des arcanes avec Barrage de projectiles.",
-    "Arcane : ne dépasse pas 2 cumuls de Déflagration, sauf contre les élites.",
-    "Givre : Éclair de givre pendant l'approche, Javelot de glace sur une cible gelée.",
-    "Givre : Trait de feu pour achever, Nova de givre si l'ennemi est trop proche.",
-    "Feu : Trait de feu à chaque recharge, Explosion pyrotechnique à 3 cumuls de Réchauffement.",
-    "Zone (3 cibles ou plus) : Nova de givre, Choc de flammes, puis Explosion des arcanes en boucle.",
-    "Trait de feu quand tu dois bouger, si la mana le permet.",
 
     "## Talents et sorts à apprendre",
     "Arcane : Spécialisation Baguette, Précision, Canalisation améliorée, puis Barrage de projectiles.",
@@ -422,13 +361,6 @@ ns.conseils.WARLOCK = {
     "Hurlement de terreur (40) pour les pulls ratés, Voile mortel (42) en urgence.",
     "Démonologie : Demonic Pact au niveau 40.",
 
-    "## Rotation",
-    "Pose tes DoTs, laisse ton démon tenir le monstre, puis baguette ou Drain de vie.",
-    "Affliction, le plus rapide : DoTs + Peur sur un premier monstre, tue le second, remets Peur.",
-    "Utilise la focalisation : DoTs et Peur sur ta cible focalisée avec un modificateur.",
-    "Ne recommence pas tes DoTs trop tôt, ni sur un monstre presque mort.",
-    "Donjon : Flammes infernales sur les groupes, préviens le soigneur avant.",
-
     "## Fragments d'âme et donjons",
     "Fragments : achève les monstres avec Drain d'âme rang 1.",
     "Les pierres de rencontre n'invoquent plus : garde des fragments pour Rituel d'invocation.",
@@ -473,17 +405,6 @@ ns.conseils.DRUID = {
     "Forme d'ours redoutable, Primal Bite et Forme de sélénien au niveau 40.",
     "Écorce au niveau 44.",
     "Équilibre : Éclipse, Feu stellaire amélioré et Vengeance tard dans la montée.",
-
-    "## Rotation",
-    "Félin : Griffure et Déchirure (5 points) si la cible vit plus de 6 s.",
-    "Félin : Lambeau dans le dos, sinon Griffe. Morsure féroce pour achever.",
-    "Ours : Rugissement démoralisant, Primal Bite dès qu'elle est prête.",
-    "Ours : Balayage sur plusieurs cibles, Mutiler sur une seule.",
-    "Félin contre les monstres faibles, ours quand il y en a plusieurs : passe de l'un à l'autre.",
-    "Équilibre en groupe : Essaim d'insectes et Éclat lunaire partout, Épines fait le reste.",
-    "Équilibre avant 40 : passe en ours (Rugissement + Balayage) le temps que la mana remonte.",
-    "Équilibre après 40 : Forme de sélénien, DoTs, puis Ouragan.",
-    "Équilibre en cible unique : Colère à portée max, Sarments, puis Colère en boucle.",
 
     "## Talents et sorts à apprendre",
     "Farouche : Célérité féline tôt, puis les talents de rage et de dégâts de l'ours.",

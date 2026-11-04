@@ -66,6 +66,25 @@ body {
 .infobulle { position: absolute; z-index: 30; max-width: 300px; padding: 8px 10px; background: rgba(8,8,24,.96);
   border: 1px solid #5b5b78; border-radius: 4px; font-size: .85rem; pointer-events: none; box-shadow: 0 2px 8px #000; line-height: 1.4; }
 .infobulle b { display: block; color: #fff; font-weight: 500; font-size: .95rem; }
+/* Infobulles façon Wowhead (sorts, talents, objets) : contenu fourni par l'API de tooltips Wowhead. */
+.infobulle[hidden] { display: none !important; } /* sinon le display:flex de .wh l'emporte sur hidden */
+.infobulle.wh { max-width: 330px; padding: 0; background: none; border: 0; box-shadow: none; display: flex; gap: 4px; align-items: flex-start; }
+.infobulle.wh .wh-icone { width: 40px; height: 40px; flex: none; border: 1px solid #000; border-radius: 4px; box-shadow: 0 0 0 1px #5b5b78, 0 2px 6px #000; }
+.infobulle.wh .wh-corps { padding: 7px 10px 8px; background: rgba(9,12,32,.97); border: 1px solid #8f8fa6; border-radius: 4px; box-shadow: 0 2px 10px #000;
+  color: #fff; font-size: .84rem; line-height: 1.35; min-width: 0; }
+.wh-corps table { border-collapse: collapse; width: 100%; } .wh-corps td, .wh-corps th { padding: 0; vertical-align: top; text-align: left; }
+.wh-corps th { text-align: right; font-weight: 400; padding-left: 12px; white-space: nowrap; }
+.wh-corps a { color: inherit; text-decoration: none; }
+.wh-corps b.whtt-name, .wh-corps td > b:first-child { display: block; font-size: 1rem; font-weight: 500; }
+.wh-corps .q { color: #ffd100; } .wh-corps .q0 { color: #9d9d9d; } .wh-corps .q1 { color: #fff; } .wh-corps .q2 { color: #1eff00; }
+.wh-corps .q3 { color: #0070dd; } .wh-corps .q4 { color: #a335ee; } .wh-corps .q5 { color: #ff8000; } .wh-corps .q6, .wh-corps .q7 { color: #e5cc80; }
+.wh-corps .wowhead-tooltip-requirements { color: #fff; }
+.wh-corps .whtt-sellprice, .wh-corps .moneygold, .wh-corps .moneysilver, .wh-corps .moneycopper { color: #fff; }
+.wh-corps .moneygold::after { content: " po"; color: #ffd100; } .wh-corps .moneysilver::after { content: " pa"; color: #c7c7cf; } .wh-corps .moneycopper::after { content: " pc"; color: #c8602c; }
+.wh-corps .wh-attente { color: #9d9d9d; font-style: italic; }
+.wh-corps .wh-addon { margin-top: 6px; padding-top: 5px; border-top: 1px solid rgba(143,143,166,.35); }
+[data-wh] { cursor: help; }
+[data-wh]:hover { text-decoration: underline dotted; }
 
 /* --- Chat --- */
 .chat { position: absolute; left: 14px; bottom: 14px; width: min(420px, calc(100% - 28px)); z-index: 2; }
@@ -85,6 +104,11 @@ body {
   background: linear-gradient(180deg, #2b2416, #15110a); border-bottom: 1px solid var(--bord); border-radius: 4px 4px 0 0; font-size: .85rem; color: #fff; user-select: none; }
 .fermer { position: absolute; right: 3px; top: 2px; width: 19px; height: 19px; border-radius: 3px; border: 1px solid #7a1a12;
   background: linear-gradient(#b3261e, #6e130e); color: #ffd7c9; font-size: 12px; line-height: 1; cursor: pointer; padding: 0; }
+/* Bouton de langue FR / EN, à gauche de la croix (comme dans l'addon). */
+.langue { position: absolute; right: 26px; top: 2px; height: 19px; min-width: 30px; padding: 0 5px; border-radius: 3px; cursor: pointer;
+  border: 1px solid #c0902e; background: linear-gradient(180deg, #8c1d14, #4d0d08); color: var(--or); font: 600 .7rem/1 var(--f-texte); letter-spacing: .04em; }
+.langue:hover { filter: brightness(1.2); }
+.langue:focus-visible, .fermer:focus-visible { outline: 2px solid var(--or); outline-offset: 1px; }
 .outils { display: flex; flex-wrap: wrap; gap: 8px; padding: 6px 12px; justify-content: space-between; align-items: center; flex: none; }
 .groupe { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .bjeu { font-family: var(--f-texte); font-size: .8rem; color: var(--or); min-width: 86px; height: 22px; padding: 0 10px; cursor: pointer;
@@ -151,7 +175,14 @@ body {
 .lien input { flex: 1; min-width: 0; background: #000; color: #fff; border: 1px solid #555; font-family: var(--f-mono); font-size: .72rem; padding: 3px 6px; }
 .titre-conseils { margin-top: 14px; margin-bottom: 2px; } .titre-conseils.premier { margin-top: 0; }
 .conseil { padding-left: 18px; text-indent: -10px; margin: 2px 0; }
+.objet[data-wh]:hover { text-decoration: none; }
+.objet.retrait { padding-left: 16px; }
+.chaine { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; vertical-align: middle; }
+.chaine img { width: 24px; height: 24px; border: 1px solid #444; }
+.chaine i { color: var(--gris); font-style: normal; padding: 0 2px; }
+.note-rot { padding-left: 34px; text-indent: -10px; margin: 1px 0; }
 .sous-onglets { display: flex; gap: 4px; flex: none; }
+.sous-onglets .bjeu { min-width: 120px; }
 .sous-onglets[hidden] { display: none; }
 .z-nom { margin-top: 10px; }
 .z-ligne { padding-left: 22px; font-size: .8rem; }
@@ -205,7 +236,7 @@ body {
     </div>
 
     <div class="fenetre" id="fenetre" hidden role="dialog" aria-label="Fenêtre AideClasse">
-      <div class="barre" id="barre"><span id="titre">AideClasse</span><button class="fermer" id="fermer" aria-label="Fermer">✕</button></div>
+      <div class="barre" id="barre"><span id="titre">AideClasse</span><button class="langue" id="langue" type="button">FR</button><button class="fermer" id="fermer" aria-label="Fermer">✕</button></div>
       <div class="outils">
         <div class="groupe" id="onglets"></div>
         <div class="groupe" role="group" aria-label="Spécialisation"><span class="nom-spe" id="nomSpe"></span><span class="groupe" id="casesSpe"></span></div>
@@ -213,7 +244,7 @@ body {
 
       <div class="vue" id="vueTalents">
         <div class="ligne-build">
-          <span>Build :</span>
+          <span id="libBuild">Build :</span>
           <button class="bjeu choix-build" id="choixBuild" aria-haspopup="listbox" aria-expanded="false"></button>
           <div class="menu-build" id="menuBuild" hidden role="listbox"></div>
         </div>
@@ -227,13 +258,11 @@ body {
       </div>
 
       <div class="vue" id="vueTexte" hidden>
-        <div class="sous-onglets" id="sousOnglets" role="group" aria-label="Conseils">
-          <button class="bjeu" data-mode="classe">Classe</button><button class="bjeu" data-mode="zones">Zones d'xp</button>
-        </div>
+        <div class="sous-onglets" id="sousOnglets" role="group" aria-label="Sous-onglets"></div>
         <div class="defile" id="defile"></div>
       </div>
 
-      <div class="lien"><span>Lien Wowhead :</span><input id="lien" readonly aria-label="Lien Wowhead à copier"></div>
+      <div class="lien"><span id="libLien">Lien Wowhead :</span><input id="lien" readonly aria-label="Lien Wowhead à copier"></div>
     </div>
 
     <div class="chat">
@@ -279,7 +308,7 @@ body {
     <div class="champ">
       <h2>À savoir</h2>
       <ul>
-        <li>Passe la souris sur un talent pour voir à quel niveau le prendre.</li>
+        <li>Passe la souris sur un talent, un sort ou un objet pour voir son infobulle Wowhead (en français) et à quel niveau le prendre.</li>
         <li>La barre sous les arbres fait défiler les niveaux de 10 à 60 ; la case qui brille reçoit le point de ce niveau.</li>
         <li>Dans le jeu, les noms de talents et d'objets s'afficheront en français.</li>
         <li>Fais glisser l'icône autour de la minimap, et la fenêtre par sa barre de titre.</li>
@@ -297,11 +326,31 @@ body {
   const CLASSES = D.classes || {}, ICONES = D.icones || {};
   const COULEURS = { WARRIOR: "#C69B6D", PALADIN: "#F48CBA", HUNTER: "#AAD372", ROGUE: "#FFF468", PRIEST: "#FFFFFF",
     SHAMAN: "#0070DD", MAGE: "#3FC7EB", WARLOCK: "#8788EE", DRUID: "#FF7C0A" };
-  let classe, conseils, SPECS;
+  let classe, conseilsFR, SPECS;
   const talentParSort = {};
+
+  // --- Langue (copie de Locale.lua : mêmes clés françaises, traductions lues dans l'addon) ---
+  const ANG = D.anglais || {}, UI_EN = ANG.ui || {}, DONNEES_EN = ANG.donnees || {};
+  const anglais = () => etat.langue === "en";
+  // T("Niveau %d", 12) : traduit puis remplace %d / %s dans l'ordre, comme string.format.
+  function T(s, ...args) {
+    const out = (anglais() && UI_EN[s]) || s; let i = 0;
+    return args.length ? out.replace(/%[ds]/g, () => String(args[i++])) : out;
+  }
+  // Libellé venant des données (classe, arbre, spé, build, emplacement...) : copie de ns.D.
+  function Dn(s) {
+    if (!s || !anglais()) return s;
+    if (DONNEES_EN[s]) return DONNEES_EN[s];
+    const m = s.match(/^(.*?)( \(.*| – .*)$/);
+    return m && DONNEES_EN[m[1]] ? DONNEES_EN[m[1]] + m[2] : s;
+  }
+  const ZT = (s) => (s && anglais() && (ANG.zones || {})[s]) || s;           // textes de Zones.lua
+  const conseilsAffiches = () => (anglais() && (ANG.conseils || {})[classe.token]) || conseilsFR;
+  const notePasTraduit = () => (anglais() ? `<div class="c-gris">${esc(T("Les textes de cette section ne sont pas encore traduits."))}</div>` : "");
+
   function chargerClasse(token) {
     classe = CLASSES[token] || CLASSES.WARLOCK || Object.values(CLASSES)[0];
-    conseils = (D.conseils || {})[classe.token] || [];
+    conseilsFR = (D.conseils || {})[classe.token] || [];
     SPECS = classe.ordreSpecs || Object.keys(classe.specs).sort();
     for (const k in talentParSort) delete talentParSort[k];
     (classe.arbres || []).forEach((a) => a.talents.forEach((t) => { talentParSort[t.sort] = t; }));
@@ -318,7 +367,13 @@ body {
 
   const ZONES = D.zones || [], ZONES_URL = "https://www.wowhead.com/forever/zones";
   const etat = { classe: "WARLOCK", niveau: 25, depenses: 16, vue: 25, spec: null, build: {}, onglet: "talents", exemple: false, cacheMini: false, angle: 225,
-    modeConseils: "classe", faction: "Alliance", tomtom: true, way: "" };
+    modeConseils: "classe", modeStuff: "equipement", faction: "Alliance", tomtom: true, way: "", langue: "fr" };
+  // Sous-onglets (copie de SUBTABS, UI.lua).
+  const SOUS = {
+    conseils: { cle: "modeConseils", modes: [["classe", "Classe"], ["rotation", "Rotation"], ["zones", "Zones d'xp"]] },
+    stuff: { cle: "modeStuff", modes: [["equipement", "Équipement"], ["enchants", "Enchants & compos"]] },
+  };
+  const ROTATIONS = D.rotations || {}, ENCHANTS = D.enchants || {};
   try { Object.assign(etat, JSON.parse(localStorage.getItem("aideclasse-sim3") || "{}")); } catch (e) {}
   chargerClasse(etat.classe); etat.classe = classe.token;
   if (!classe.specs[etat.spec]) etat.spec = classe.defaultSpec;
@@ -327,8 +382,8 @@ body {
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const texte = (s) => esc(s)
-    .replace(/\{s:(\d+):([^}]*)\}/g, (_, id, n) => `<span class="c-sort">${n || "sort " + id}</span>`)
-    .replace(/\{i:(\d+):([^}]*)\}/g, (_, id, n) => `<span class="c-epique">${n || "objet " + id}</span>`);
+    .replace(/\{s:(\d+):([^}]*)\}/g, (_, id, n) => `<span class="c-sort" data-wh="spell:${id}">${n || T("sort %d", id)}</span>`)
+    .replace(/\{i:(\d+):([^}]*)\}/g, (_, id, n) => `<span class="c-epique" data-wh="item:${id}">${n || T("objet %d", id)}</span>`);
   const gagnes = () => Math.max(0, etat.niveau - 9);
   const spec = () => classe.specs[etat.spec];
   function build() {
@@ -363,7 +418,7 @@ body {
   // --- Vue Talents ---
   function rendreTalents() {
     const bb = build(), b = bb && bb.b;
-    $("choixBuild").textContent = b ? b.nom : "Aucun build";
+    $("choixBuild").textContent = b ? Dn(b.nom) : T("Aucun build");
     const ordonne = !!(b && b.etapes && b.etapes.length);
     const finals = {}; ((b && b.final) || []).forEach((t) => { finals[t.sort] = t.points; });
     const niveaux = ordonne ? niveauxTalents(b) : {};
@@ -389,22 +444,22 @@ body {
         const rang = r > 0 ? `<span class="rang">${r}/${t.rangMax}</span>` : "";
         return `<button class="${cls}" style="left:${x}px;top:${y}px" data-sort="${t.sort}" data-r="${r}" data-f="${f}" data-niv="${(niveaux[t.sort] || []).join("-")}" aria-label="${esc(t.nom)} ${r}/${t.rangMax}"><img src="${img(t.icone)}" alt="">${rang}</button>`;
       }).join("");
-      return `<div class="arbre" data-i="${i}"><div class="tete"><img src="${img(a.icone)}" alt=""><span>${esc(a.nom)}</span><em>${total} pt${total > 1 ? "s" : ""}</em></div>${fleches}${cases}</div>`;
+      return `<div class="arbre" data-i="${i}"><div class="tete"><img src="${img(a.icone)}" alt=""><span>${esc(Dn(a.nom))}</span><em>${T(total > 1 ? "%d pts" : "%d pt", total)}</em></div>${fleches}${cases}</div>`;
     }).join("");
 
-    if (!b) { $("valNiveau").innerHTML = ""; $("info").innerHTML = '<span class="c-gris">Aucun build disponible pour cette spécialisation.</span>'; }
+    if (!b) { $("valNiveau").innerHTML = ""; $("info").innerHTML = `<span class="c-gris">${esc(T("Aucun build disponible pour cette spécialisation."))}</span>`; }
     else if (!ordonne) {
-      $("valNiveau").innerHTML = "Niveau 60";
-      $("info").innerHTML = '<span class="c-gris">Wowhead ne donne pas d\'ordre pour ce build : voici la répartition finale au niveau 60.</span>';
+      $("valNiveau").innerHTML = esc(T("Niveau %d", 60));
+      $("info").innerHTML = `<span class="c-gris">${esc(T("Wowhead ne donne pas d'ordre pour ce build : voici la répartition finale au niveau 60."))}</span>`;
     } else {
-      $("valNiveau").innerHTML = `Niveau ${etat.vue} <b>&nbsp;${etat.vue - 9} points</b>`;
+      $("valNiveau").innerHTML = `${esc(T("Niveau %d", etat.vue))} <b>&nbsp;${esc(T("%d points", etat.vue - 9))}</b>`;
       const t = talentParSort[dernier];
-      $("info").innerHTML = t ? `Au niveau ${etat.vue} : +1 point en <span class="c-sort">${esc(t.nom)}</span> (${rangDernier}/${t.rangMax})` : "";
+      $("info").innerHTML = t ? T("Au niveau %d : +1 point en %s", etat.vue, `<span class="c-sort" data-wh="spell:${t.sort}">${esc(t.nom)}</span>`) + ` (${rangDernier}/${t.rangMax})` : "";
     }
-    let perso = `Ton personnage : niveau ${etat.niveau}, ${etat.depenses}/${gagnes()} points dépensés`;
+    let perso = esc(T("Ton personnage : niveau %d", etat.niveau) + T(", %d/%d points dépensés", etat.depenses, gagnes()));
     if (ordonne && etat.depenses < gagnes()) {
       const t = talentParSort[rangsA(b, etat.depenses + 1).dernier];
-      if (t) perso += `  <span class="c-orange">→ prochain : ${esc(t.nom)}</span>`;
+      if (t) perso += `  <span class="c-orange">${T("→ prochain : %s", `<span data-wh="spell:${t.sort}">${esc(t.nom)}</span>`)}</span>`;
     }
     $("perso").innerHTML = perso;
   }
@@ -415,36 +470,85 @@ body {
   function rendreZones() {
     const f = etat.faction, n = etat.niveau;
     const liste = ZONES.filter((z) => !z.camp || z.camp === f).sort((a, b) => a.min - b.min || a.max - b.max);
-    const bons = liste.filter((z) => n >= z.min && n <= z.max).map((z) => esc(z.nom));
+    const bons = liste.filter((z) => n >= z.min && n <= z.max).map((z) => esc(ZT(z.nom)));
     points = [];
-    let h = `<div class="c-or">Zones de montée en niveau – ${esc(f)}</div>`
-      + '<div class="c-gris">Niveaux estimés par Wowhead (le jeu n\'en donne pas). Bouton Point : flèche TomTom, sinon point sur la carte.</div>'
-      + (etat.tomtom ? '<div class="c-vert">TomTom détecté.</div>' : '<div class="c-orange">TomTom non détecté : la commande /way s\'affiche en bas pour la copier.</div>')
-      + `<div>&nbsp;</div><div><span class="c-vert">Pour ton niveau (${n}) : </span>${bons.length ? bons.join(", ") : '<span class="c-gris">aucune zone listée</span>'}</div>`;
+    let h = `<div class="c-or">${esc(T("Zones de montée en niveau"))} – ${esc(f)}</div>`
+      + `<div class="c-gris">${esc(T("Niveaux estimés par Wowhead (le jeu n'en donne pas). Bouton Point : flèche TomTom, sinon point sur la carte."))}</div>`
+      + (etat.tomtom ? `<div class="c-vert">${esc(T("TomTom détecté."))}</div>` : `<div class="c-orange">${esc(T("TomTom non détecté : la commande /way s'affiche en bas pour la copier."))}</div>`)
+      + `<div>&nbsp;</div><div><span class="c-vert">${esc(T("Pour ton niveau (%d) : ", n))}</span>${bons.length ? bons.join(", ") : `<span class="c-gris">${esc(T("aucune zone listée"))}</span>`}</div>`;
     for (const z of liste) {
+      const nom = ZT(z.nom);
       let col = "c-blanc", tag = "";
-      if (n >= z.min && n <= z.max) { col = "c-vert"; tag = '<span class="c-vert">&nbsp; (ton niveau)</span>'; }
+      if (n >= z.min && n <= z.max) { col = "c-vert"; tag = `<span class="c-vert">&nbsp; ${esc(T("(ton niveau)"))}</span>`; }
       else if (n > z.max) col = "c-gris";
       else if (n < z.min - 5) col = "c-orange";
-      const camp = (z.camp || "Contestée") + (z.nouveau ? ", nouvelle zone Forever" : "");
-      h += `<div class="z-nom"><span class="${col}">${esc(z.nom)}</span>&nbsp; <span class="c-or">niv. ${z.min}–${z.max}</span>&nbsp; <span class="c-gris">(${esc(camp)})</span>${tag}</div>`;
+      const camp = (z.camp || T("Contestée")) + (z.nouveau ? T(", nouvelle zone Forever") : "");
+      h += `<div class="z-nom"><span class="${col}">${esc(nom)}</span>&nbsp; <span class="c-or">${esc(T("niv. %d–%d", z.min, z.max))}</span>&nbsp; <span class="c-gris">(${esc(camp)})</span>${tag}</div>`;
       const a = z.acces || {};
-      const acces = a[f] || a.tous || (a.Alliance && a.Horde ? `Alliance : ${a.Alliance} Horde : ${a.Horde}` : a.Alliance || a.Horde);
-      if (acces) h += `<div class="z-ligne">Accès : ${esc(acces)}</div>`;
+      const acces = ZT(a[f] || a.tous) || (a.Alliance && a.Horde ? T("Alliance : %s Horde : %s", ZT(a.Alliance), ZT(a.Horde)) : ZT(a.Alliance || a.Horde));
+      if (acces) h += `<div class="z-ligne">${esc(T("Accès : "))}${esc(acces)}</div>`;
       let vus = 0;
       const ajouter = (titre, p) => {
         points.push(p);
-        h += `<div class="z-hub"><span>• ${esc(titre)}<span class="c-gris">&nbsp; ${p.x}, ${p.y}</span></span><button class="bjeu" data-point="${points.length - 1}">Point</button></div>`;
+        h += `<div class="z-hub"><span>• ${esc(titre)}<span class="c-gris">&nbsp; ${p.x}, ${p.y}</span></span><button class="bjeu" data-point="${points.length - 1}">${esc(T("Point"))}</button></div>`;
       };
       for (const hub of z.hubs || []) {
         if (hub.f && hub.f !== f) continue;
-        ajouter(hub.nom, { map: hub.map || z.map, x: hub.x, y: hub.y, title: hub.nom }); vus++;
+        const hubNom = ZT(hub.nom);
+        ajouter(hubNom, { map: hub.map || z.map, x: hub.x, y: hub.y, title: hubNom }); vus++;
       }
-      if (!z.hubs && z.map) ajouter("Centre de la zone", { map: z.map, x: 50, y: 50, title: z.nom });
-      else if (z.nouveau) h += '<div class="z-ligne c-gris">Coordonnées pas encore connues pour cette nouvelle zone.</div>';
-      else if (!vus) h += '<div class="z-ligne c-gris">Pas de camp de ta faction dans cette zone.</div>';
+      if (!z.hubs && z.map) ajouter(T("Centre de la zone"), { map: z.map, x: 50, y: 50, title: nom });
+      else if (z.nouveau) h += `<div class="z-ligne c-gris">${esc(T("Coordonnées pas encore connues pour cette nouvelle zone."))}</div>`;
+      else if (!vus) h += `<div class="z-ligne c-gris">${esc(T("Pas de camp de ta faction dans cette zone."))}</div>`;
     }
-    h += `<div>&nbsp;</div><div class="c-gris">Niveau 60 : Mont Hyjal (nouvelle zone de fin de jeu). Source : ${ZONES_URL}</div>`;
+    h += `<div>&nbsp;</div><div class="c-gris">${esc(T("Niveau 60 : Mont Hyjal (nouvelle zone de fin de jeu). Source : %s", ZONES_URL))}</div>`;
+    $("defile").innerHTML = h;
+  }
+
+  // --- Rotation et Enchants & compos (copie de refreshRotation / refreshEnchants, UI.lua) ---
+  const dansTranche = (n, a, b, strict) => (a === b ? n === a : n >= a && (n < b || (!strict && b === 60 && n === 60)));
+  const titreTranche = (a, b) => (a === b ? T("Niveau %d", a) : T("Niveaux %d à %d", a, b));
+  const noteGris = (t) => (t ? `<span class="c-gris">&nbsp; – &nbsp;${esc(t)}</span>` : "");
+  const attrWh = (type, id, nom) => (id ? ` data-wh="${type}:${id}" data-nom="${esc(nom)}"` : "");
+  const titreSection = (t, actuel, cls = "titre-conseils") => actuel
+    ? `<div class="${cls} c-vert">&gt; ${esc(t)}&nbsp; ${esc(T("(ton niveau)"))}</div>` : `<div class="${cls} c-or">${esc(t)}</div>`;
+
+  function rendreRotation() {
+    const sp = spec(), rot = ROTATIONS[classe.token] || {}, n = etat.niveau;
+    const tranches = [...(rot.debut || []), ...(rot[etat.spec] || [])];
+    let h = `<div class="c-or">${esc(T("Rotation – %s", Dn(sp.nom)))}</div><div class="c-gris">${esc(T("Du haut vers le bas : lance le premier sort disponible. Survole une icône pour le détail."))}</div>` + notePasTraduit();
+    const actuelle = tranches.find((t) => dansTranche(n, t.min, t.max));
+    if (actuelle) {
+      h += `<div style="margin-top:8px"><span class="c-vert">${esc(T("Ton niveau (%d) : ", n))}</span><span class="chaine">`
+        + actuelle.etapes.map((e) => `<img src="${img(e.ic)}" alt="${esc(e.jeu || e.n)}" title="${esc(e.jeu || e.n)}">`).join("<i>&gt;</i>") + "</span></div>";
+    }
+    if (!tranches.length) h += `<div class="c-gris">${esc(T("Pas encore de rotation écrite pour cette spécialisation."))}</div>`;
+    for (const t of tranches) {
+      h += titreSection(titreTranche(t.min, t.max), dansTranche(n, t.min, t.max));
+      t.etapes.forEach((e, i) => {
+        h += `<div class="objet retrait"${attrWh("spell", e.s, e.jeu || e.n)}><img src="${img(e.ic)}" alt=""><span><span class="c-blanc">${i + 1}.</span>&nbsp; <span class="c-sort">${esc(e.jeu || e.n)}</span>${noteGris(e.t)}</span></div>`;
+      });
+      for (const note of t.notes || []) h += `<div class="note-rot"><span class="c-orange">•</span> ${esc(note)}</div>`;
+    }
+    $("defile").innerHTML = h;
+  }
+
+  function rendreEnchants() {
+    const sp = spec(), n = etat.niveau;
+    const cle = ((ENCHANTS.specs || {})[classe.token] || {})[etat.spec], P = cle && (ENCHANTS.profils || {})[cle];
+    let h = `<div class="c-or">${esc(T("Enchantements et consommables (%s)", Dn(sp.nom)))}</div>`;
+    if (!P) { $("defile").innerHTML = h + `<div class="c-gris">${esc(T("Pas encore de liste pour cette spécialisation."))}</div>`; return; }
+    h += `<div class="c-gris">${esc(T("Profil : %s. Bases de WoW Classic : WoW Forever ajoute des recettes, vérifie sur Wowhead.", P.nom))}</div>` + notePasTraduit();
+    const enchants = (liste) => liste.map((e) => `<div class="objet retrait"${attrWh("spell", e.s, e.jeu || e.n)}><img src="${img(e.ic || "trade_engraving")}" alt=""><span><span class="c-blanc">${esc(e.e)}</span>&nbsp; <span class="c-vert">${esc(e.n)}</span>${noteGris(e.t)}</span></div>`).join("");
+    h += titreSection(T("Enchantements pendant la montée"), n < 60) + enchants(P.montee || []);
+    h += titreSection(T("Enchantements au niveau 60"), n >= 60) + enchants(P.max || []);
+    h += `<div class="titre-conseils c-or" style="margin-top:18px">${esc(T("Consommables par tranche de niveau"))}</div>`;
+    const strict = (P.compos || []).some((t) => t.min === t.max);
+    for (const t of P.compos || []) {
+      const actuel = dansTranche(n, t.min, t.max, strict);
+      h += `<div style="margin-top:6px">&nbsp;&nbsp;${actuel ? `<span class="c-vert">&gt; ${titreTranche(t.min, t.max)}&nbsp; ${esc(T("(ton niveau)"))}</span>` : `<span class="c-blanc">${titreTranche(t.min, t.max)}</span>`}</div>`;
+      h += t.objets.map((c) => `<div class="objet retrait"${attrWh("item", c.i, c.jeu || c.n)}><img src="${img(c.ic)}" alt=""><span><span class="c-blanc">${esc(c.jeu || c.n)}</span>${noteGris(c.t)}</span></div>`).join("");
+    }
     $("defile").innerHTML = h;
   }
 
@@ -452,56 +556,67 @@ body {
   function rendreTexte() {
     const sp = spec(); let h = "";
     if (etat.onglet === "conseils" && etat.modeConseils === "zones") { rendreZones(); return; }
+    if (etat.onglet === "conseils" && etat.modeConseils === "rotation") { rendreRotation(); return; }
+    if (etat.onglet === "stuff" && etat.modeStuff === "enchants") { rendreEnchants(); return; }
     if (etat.onglet === "stuff") {
-      h += `<div class="c-or">Priorité des statistiques (${esc(sp.nom)})</div>`;
-      if (!sp.stats || !sp.stats.length) h += '<div class="c-gris">&nbsp;&nbsp;Pas encore disponible.</div>';
+      h += `<div class="c-or">${esc(T("Priorité des statistiques (%s)", Dn(sp.nom)))}</div>`;
+      if (!sp.stats || !sp.stats.length) h += `<div class="c-gris">&nbsp;&nbsp;${esc(T("  Pas encore disponible.").trim())}</div>`;
       (sp.stats || []).forEach((s, i) => { h += `<div>&nbsp;&nbsp;${i + 1}. ${texte(s)}</div>`; });
-      h += '<div>&nbsp;</div><div class="c-or">Meilleur équipement (BiS)</div>';
+      h += `<div>&nbsp;</div><div class="c-or">${esc(T("Meilleur équipement (BiS)"))}</div>`;
       const objets = (sp.objets && sp.objets.length) ? sp.objets : (etat.exemple ? EXEMPLE_BIS : []);
-      if (!objets.length) h += '<div class="c-gris">&nbsp;&nbsp;Wowhead n\'a pas encore rempli sa liste BiS pour WoW Forever. Elle apparaîtra ici automatiquement dès qu\'elle sera publiée.</div>';
+      if (!objets.length) h += `<div class="c-gris">&nbsp;&nbsp;${esc(T("Wowhead n'a pas encore rempli sa liste BiS pour WoW Forever. Elle apparaîtra ici automatiquement dès qu'elle sera publiée."))}</div>`;
       let empl = null;
       for (const o of objets) {
         if (o.emplacement !== empl) { empl = o.emplacement; h += '<div style="height:8px"></div>'; }
-        const statut = o.porte ? '<span class="c-vert">porté</span>' : '<span class="c-orange">à chercher</span>';
+        const statut = o.porte ? `<span class="c-vert">${esc(T("porté"))}</span>` : `<span class="c-orange">${esc(T("à chercher"))}</span>`;
         const src = o.source ? `<span class="c-gris">&nbsp; – &nbsp;${texte(o.source)}</span>` : "";
-        h += `<div class="objet" data-objet="${o.id}"><img src="${img(o.icone)}" alt=""><span><span class="c-blanc">${esc(o.emplacement)}</span>&nbsp; <span class="c-gris">${esc(o.rang)}</span>&nbsp; <span class="c-epique">${esc(o.nom)}</span> [${statut}]${src}</span></div>`;
+        h += `<div class="objet" data-objet="${o.id}"><img src="${img(o.icone)}" alt=""><span><span class="c-blanc">${esc(Dn(o.emplacement))}</span>&nbsp; <span class="c-gris">${esc(Dn(o.rang))}</span>&nbsp; <span class="c-epique">${esc(o.nom)}</span> [${statut}]${src}</span></div>`;
       }
     } else {
-      if (!conseils.length) h += '<div class="c-gris">Pas encore de conseils écrits pour cette classe. Le lien en bas de la fenêtre ouvre le guide Wowhead de ta spécialisation.</div>';
+      const conseils = conseilsAffiches();
+      if (!conseils.length) h += `<div class="c-gris">${esc(T("Pas encore de conseils écrits pour cette classe. Le lien en bas de la fenêtre ouvre le guide Wowhead de ta spécialisation."))}</div>`;
       conseils.forEach((c, i) => {
         const titre = c.match(/^##\s*(.+)$/);
         if (!titre) { h += `<div class="conseil">• ${esc(c)}</div>`; return; }
-        const t = titre[1], m = t.match(/(\d+) à (\d+)/), n = etat.niveau;
+        const t = titre[1], m = t.match(/(\d+) (?:à|to) (\d+)/), n = etat.niveau;
+        const affiche = m ? T("Niveaux %d à %d", m[1], m[2]) : Dn(t);
         const actuel = m && n >= +m[1] && (n < +m[2] || (+m[2] === 60 && n === 60));
-        h += actuel ? `<div class="titre-conseils c-vert${i ? "" : " premier"}">&gt; ${esc(t)}&nbsp; (ton niveau)</div>`
-                    : `<div class="titre-conseils c-or${i ? "" : " premier"}">${esc(t)}</div>`;
+        h += actuel ? `<div class="titre-conseils c-vert${i ? "" : " premier"}">&gt; ${esc(affiche)}&nbsp; ${esc(T("(ton niveau)"))}</div>`
+                    : `<div class="titre-conseils c-or${i ? "" : " premier"}">${esc(affiche)}</div>`;
       });
-      h += `<div>&nbsp;</div><div class="c-gris">Talents, stats et BiS : ${esc(classe.source)}, mis à jour le ${esc(classe.majLe)}.</div><div class="c-gris">AideClasse v0.5.0</div>`;
+      h += `<div>&nbsp;</div><div class="c-gris">${esc(T("Talents, stats et BiS : %s, mis à jour le %s.", Dn(classe.source), classe.majLe))}</div><div class="c-gris">AideClasse v0.5.0</div>`;
     }
     $("defile").innerHTML = h;
   }
 
   function rafraichir() {
     const sp = spec(), bb = build();
-    $("titre").textContent = "AideClasse – " + classe.nom;
+    cacherBulle();   // l'élément survolé va être redessiné : sa bulle ne recevrait jamais de mouseout
+    $("titre").textContent = "AideClasse – " + Dn(classe.nom);
+    $("langue").textContent = anglais() ? "EN" : "FR";
+    $("langue").setAttribute("aria-label", T("Changer de langue"));
+    $("fenetre").lang = anglais() ? "en" : "fr";   // seule la fenêtre de l'addon change de langue
+    $("libBuild").textContent = T("Build :"); $("libLien").textContent = T("Lien Wowhead :");
     $("onglets").innerHTML = "";
     for (const [cle, lib] of ONGLETS) {
-      const b = document.createElement("button"); b.className = "bjeu"; b.textContent = lib; b.disabled = cle === etat.onglet;
+      const b = document.createElement("button"); b.className = "bjeu"; b.textContent = T(lib); b.disabled = cle === etat.onglet;
       b.addEventListener("click", () => montrer(cle)); $("onglets").appendChild(b);
     }
-    $("nomSpe").textContent = sp.nom;
+    $("nomSpe").textContent = Dn(sp.nom);
     $("casesSpe").innerHTML = "";
     for (const k of SPECS) {
       const s = classe.specs[k], b = document.createElement("button");
-      b.className = "case-spe"; b.setAttribute("aria-pressed", k === etat.spec); b.title = s.nom; b.setAttribute("aria-label", s.nom);
+      b.className = "case-spe"; b.setAttribute("aria-pressed", k === etat.spec); b.title = Dn(s.nom); b.setAttribute("aria-label", Dn(s.nom));
       b.innerHTML = `<img src="${img(s.icone)}" alt="">`;
       b.addEventListener("click", () => { etat.spec = k; fermerMenu(); rafraichir(); });
       $("casesSpe").appendChild(b);
     }
     const talents = etat.onglet === "talents", zones = etat.onglet === "conseils" && etat.modeConseils === "zones";
     $("vueTalents").hidden = !talents; $("vueTexte").hidden = talents;
-    $("sousOnglets").hidden = etat.onglet !== "conseils";
-    $("sousOnglets").querySelectorAll("button").forEach((b) => { b.disabled = b.dataset.mode === etat.modeConseils; });
+    const sous = SOUS[etat.onglet];
+    $("sousOnglets").hidden = !sous;
+    $("sousOnglets").innerHTML = sous ? sous.modes.map(([cle, lib]) =>
+      `<button class="bjeu" data-mode="${cle}"${etat[sous.cle] === cle ? " disabled" : ""}>${esc(T(lib))}</button>`).join("") : "";
     // Les zones ne dépendent pas de la classe : pas de cases de spé, comme dans le jeu.
     $("casesSpe").style.display = zones ? "none" : ""; $("nomSpe").style.display = zones ? "none" : "";
     if (talents) rendreTalents(); else rendreTexte();
@@ -523,7 +638,7 @@ body {
     if ($("fenetre").hidden) etat.vue = Math.max(10, Math.min(60, etat.niveau));
     $("fenetre").hidden = false; $("defile").scrollTop = 0; rafraichir();
   }
-  function basculer() { if (!$("fenetre").hidden) { $("fenetre").hidden = true; fermerMenu(); } else montrer(); }
+  function basculer() { if (!$("fenetre").hidden) { $("fenetre").hidden = true; fermerMenu(); cacherBulle(); } else montrer(); }
   function speSuivante() { etat.spec = SPECS[(SPECS.indexOf(etat.spec) + 1) % SPECS.length]; }
   function buildSuivant() { const bb = build(); if (bb) etat.build[etat.spec] = bb.i % bb.n + 1; }
 
@@ -533,7 +648,7 @@ body {
     e.stopPropagation();
     if (!$("menuBuild").hidden) { fermerMenu(); return; }
     const bb = build(), liste = spec().builds || [];
-    $("menuBuild").innerHTML = liste.map((b, i) => `<button role="option" data-i="${i + 1}" class="${bb && bb.i === i + 1 ? "actuel" : ""}">${esc(b.nom)}</button>`).join("");
+    $("menuBuild").innerHTML = liste.map((b, i) => `<button role="option" data-i="${i + 1}" class="${bb && bb.i === i + 1 ? "actuel" : ""}">${esc(Dn(b.nom))}</button>`).join("");
     $("menuBuild").hidden = false; $("choixBuild").setAttribute("aria-expanded", "true");
     const premier = $("menuBuild").querySelector("button"); if (premier) premier.focus();
   });
@@ -551,21 +666,34 @@ body {
     if (!m) { chat('<span class="c-gris">(Dans le jeu, ce texte partirait dans le canal de discussion.)</span>'); return; }
     const cmd = m[1].toLowerCase(), msg = m[2].trim().toLowerCase();
     if (cmd !== "aideclasse" && cmd !== "acl") { chat('<span style="color:#ffff00">Commande inconnue. Tape /aideclasse aide.</span>'); return; }
-    if (msg === "minimap") { etat.cacheMini = !etat.cacheMini; chat(prefixe + (etat.cacheMini ? "icône minimap cachée." : "icône minimap affichée.")); rafraichir(); }
+    if (msg === "minimap") { etat.cacheMini = !etat.cacheMini; chat(prefixe + esc(T(etat.cacheMini ? "icône minimap cachée." : "icône minimap affichée."))); rafraichir(); }
+    else if (msg === "fr" || msg === "en") changerLangue(msg);
+    else if (msg === "langue" || msg === "lang" || msg === "language") changerLangue(anglais() ? "fr" : "en");
     else if (["talents", "stuff", "conseils"].includes(msg)) montrer(msg);
     else if (msg === "zones" || msg === "zone") { etat.modeConseils = "zones"; montrer("conseils"); }
+    else if (msg === "rotation" || msg === "rota") { etat.modeConseils = "rotation"; montrer("conseils"); }
+    else if (msg === "enchants" || msg === "compos") { etat.modeStuff = "enchants"; montrer("stuff"); }
     else if (msg === "spe" || msg === "spé") { speSuivante(); montrer("talents"); }
     else if (msg === "build") { buildSuivant(); montrer("talents"); }
     else if (msg === "aide" || msg === "help") {
-      chat(prefixe + "/aideclasse : ouvrir/fermer la fenêtre");
-      chat(prefixe + "/aideclasse talents | stuff | conseils : ouvrir un onglet");
-      chat(prefixe + "/aideclasse zones : zones de montée en niveau");
-      chat(prefixe + "/aideclasse spe : spécialisation suivante — /aideclasse build : build suivant");
-      chat(prefixe + "/aideclasse minimap : cacher/afficher l'icône");
+      for (const l of ["/aideclasse : ouvrir/fermer la fenêtre", "/aideclasse talents | stuff | conseils : ouvrir un onglet",
+        "/aideclasse zones : zones de montée en niveau",
+        "/aideclasse rotation : rotation de ta spé — /aideclasse enchants : enchantements et compos",
+        "/aideclasse spe : spécialisation suivante — /aideclasse build : build suivant",
+        "/aideclasse minimap : cacher/afficher l'icône", "/aideclasse fr | en : langue de l'interface"]) chat(prefixe + esc(T(l)));
     } else basculer();
   }
+  // Bouton FR / EN de la fenêtre (comme ns.SetLang : change la langue et redessine).
+  function changerLangue(l) {
+    etat.langue = l; fermerMenu(); cacherBulle(); rafraichir();
+    chat(prefixe + esc(T("langue : français.")));
+  }
+  $("langue").addEventListener("click", () => changerLangue(anglais() ? "fr" : "en"));
+  $("langue").addEventListener("mouseenter", () => bulle($("langue"),
+    `<b>${esc(T("Changer de langue"))}</b>${esc(T("Interface en français. Clic : passer en anglais."))}`, true));
+  $("langue").addEventListener("mouseleave", cacherBulle);
   $("formChat").addEventListener("submit", (e) => { e.preventDefault(); commande($("saisie").value); $("saisie").value = ""; });
-  for (const c of ["/aideclasse", "/aideclasse stuff", "/aideclasse conseils", "/aideclasse zones", "/aideclasse minimap", "/aideclasse aide"]) {
+  for (const c of ["/aideclasse", "/aideclasse stuff", "/aideclasse enchants", "/aideclasse conseils", "/aideclasse rotation", "/aideclasse zones", "/aideclasse minimap", "/aideclasse langue", "/aideclasse aide"]) {
     const b = document.createElement("button"); b.type = "button"; b.innerHTML = `<code>${c}</code>`;
     b.addEventListener("click", () => commande(c)); $("raccourcis").appendChild(b);
   }
@@ -590,55 +718,117 @@ body {
   bouton.addEventListener("pointerup", (e) => { const g = glisse; glisse = null; if (g && g.bouge) { sauver(); return; } if (e.button === 0) basculer(); });
   bouton.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); basculer(); } });
   bouton.addEventListener("contextmenu", (e) => { e.preventDefault(); montrer("stuff"); });
-  bouton.addEventListener("mouseenter", () => bulle(bouton, "<b>AideClasse</b>Clic gauche : ouvrir / fermer<br>Clic droit : onglet Stuff<br>Glisser : déplacer l'icône", true));
+  bouton.addEventListener("mouseenter", () => bulle(bouton, "<b>AideClasse</b>" + ["Clic gauche : ouvrir / fermer", "Clic droit : onglet Stuff", "Glisser : déplacer l'icône"].map((l) => esc(T(l))).join("<br>"), true));
   bouton.addEventListener("mouseleave", cacherBulle);
 
   // --- Infobulles ---
-  function bulle(cible, html, aGauche) {
+  // Zone survolée qui a ouvert la bulle (la ligne entière pour une icône d'objet ou de sort).
+  let zoneBulle = null;
+  const visible = (el) => el && el.isConnected && el.getClientRects().length > 0;
+  function bulle(cible, html, aGauche, wh) {
+    if (!visible(cible)) { cacherBulle(); return; }
     const b = $("infobulle"), s = $("scene").getBoundingClientRect(), r = cible.getBoundingClientRect();
-    b.innerHTML = html; b.hidden = false;
+    zoneBulle = cible.closest(".objet, button, [data-wh]") || cible;
+    b.innerHTML = html; b.classList.toggle("wh", !!wh); b.hidden = false;
     let x = aGauche ? r.left - s.left - b.offsetWidth - 6 : r.right - s.left + 8;
     if (x + b.offsetWidth > s.width - 4) x = r.left - s.left - b.offsetWidth - 6;
-    b.style.left = Math.max(4, x) + "px"; b.style.top = Math.max(4, r.top - s.top) + "px";
+    const y = Math.min(r.top - s.top, s.height - b.offsetHeight - 4);
+    b.style.left = Math.max(4, x) + "px"; b.style.top = Math.max(4, y) + "px";
   }
-  function cacherBulle() { $("infobulle").hidden = true; }
+  function cacherBulle() { jetonBulle++; zoneBulle = null; $("infobulle").hidden = true; }
+  // Filet de sécurité : si l'élément a disparu (fenêtre fermée, page redessinée) ou n'est plus survolé,
+  // aucun mouseout n'arrive ; on vérifie donc à chaque mouvement de souris.
+  document.addEventListener("pointermove", (e) => {
+    if ($("infobulle").hidden) return;
+    const sous = document.elementFromPoint(e.clientX, e.clientY);
+    if (!zoneBulle || !visible(zoneBulle) || !(sous && zoneBulle.contains(sous))) cacherBulle();
+  });
+  document.documentElement.addEventListener("mouseleave", cacherBulle);
+
+  // Infobulles Wowhead : même contenu que sur wowhead.com (en français), chargé au survol puis gardé en mémoire.
+  // Sans connexion, on retombe sur l'infobulle simple de l'addon.
+  const WH_TT = "https://nether.wowhead.com/forever/tooltip/", WH_ICONES = "https://wow.zamimg.com/images/wow/icons/large/";
+  const requetesWh = {}, resultatsWh = {};
+  let jetonBulle = 0;
+  function chargerWh(type, id) {
+    const cle = type + ":" + id + ":" + etat.langue;   // locale Wowhead : 2 = français, 0 = anglais
+    if (!requetesWh[cle]) {
+      requetesWh[cle] = fetch(`${WH_TT}${type}/${id}?locale=${anglais() ? 0 : 2}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => (d && d.tooltip ? d : null))
+        .catch(() => null)
+        .then((d) => { resultatsWh[cle] = d; if (!d) setTimeout(() => { delete requetesWh[cle]; }, 30000); return d; });
+    }
+    return requetesWh[cle];
+  }
+  // Le HTML vient de Wowhead : on ne garde que la mise en forme (pas de scripts, liens ni attributs actifs).
+  function nettoyer(html) {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    doc.querySelectorAll("script, style, iframe, object, embed, img, link, form, input, button").forEach((n) => n.remove());
+    doc.querySelectorAll("*").forEach((n) => { for (const a of [...n.attributes]) if (!/^(class|width|colspan|rowspan)$/.test(a.name)) n.removeAttribute(a.name); });
+    return doc.body.innerHTML;
+  }
+  function bulleWh(cible, type, id, secours, addon, aGauche) {
+    const j = ++jetonBulle, cle = type + ":" + id + ":" + etat.langue;
+    const afficher = (d, enCours) => {
+      if (j !== jetonBulle || !cible.isConnected) return;
+      const icone = d && d.icon && /^[a-z0-9_\-]+$/.test(d.icon) ? (ICONES[d.icon] || WH_ICONES + d.icon + ".jpg") : "";
+      const corps = d ? nettoyer(d.tooltip)
+        : secours + (enCours ? '<div class="wh-attente">Chargement de l\'infobulle Wowhead…</div>' : "");
+      bulle(cible, (icone ? `<img class="wh-icone" src="${icone}" alt="" onerror="this.remove()">` : "")
+        + `<div class="wh-corps">${corps}${addon ? `<div class="wh-addon">${addon}</div>` : ""}</div>`, aGauche, true);
+    };
+    if (cle in resultatsWh) { afficher(resultatsWh[cle]); return; }
+    afficher(null, true);
+    chargerWh(type, id).then((d) => afficher(d));
+  }
+
   $("arbres").addEventListener("mouseover", (e) => {
     const c = e.target.closest(".talent"); if (!c) return;
     const t = talentParSort[c.dataset.sort], r = +c.dataset.r, f = +c.dataset.f, niv = c.dataset.niv;
     const bb = build(), ordonne = bb && bb.b.etapes && bb.b.etapes.length;
-    let h = `<b>${esc(t.nom)}</b><span class="c-gris">Rangs : ${t.rangMax}</span><br><br><span class="c-or">${ordonne ? "Niveau " + etat.vue : "Niveau 60"} : ${r}/${t.rangMax}</span>`;
+    let h = `<span class="c-or">${esc(T("Niveau %d : %d/%d", ordonne ? etat.vue : 60, r, t.rangMax))}</span>`;
     if (f > 0) {
-      h += `<br><span class="c-blanc">Dans ce build : ${f}/${t.rangMax}</span>`;
-      if (niv) { const [a, z] = niv.split("-"); h += `<br><span class="c-vert">À prendre ${a === z ? "au niveau " + a : "du niveau " + a + " au " + z}</span>`; }
-    } else h += '<br><span class="c-gris">Pas pris dans ce build</span>';
-    h += '<br><span class="c-gris" style="font-size:.78rem">(dans le jeu, la description complète du sort s\'affiche au-dessus)</span>';
-    bulle(c, h);
+      h += `<br><span class="c-blanc">${esc(T("Dans ce build : %d/%d", f, t.rangMax))}</span>`;
+      if (niv) { const [a, z] = niv.split("-"); h += `<br><span class="c-vert">${esc(a === z ? T("À prendre au niveau %d", a) : T("À prendre du niveau %d au %d", a, z))}</span>`; }
+    } else h += `<br><span class="c-gris">${esc(T("Pas pris dans ce build"))}</span>`;
+    bulleWh(c, "spell", t.sort, `<b>${esc(t.nom)}</b><span class="c-gris">Talent – ${t.rangMax} rang${t.rangMax > 1 ? "s" : ""}</span>`, h);
   });
   $("arbres").addEventListener("mouseout", (e) => { if (e.target.closest(".talent")) cacherBulle(); });
   $("defile").addEventListener("mouseover", (e) => {
-    const o = e.target.closest("[data-objet]"); if (!o) return;
-    const liste = (spec().objets && spec().objets.length) ? spec().objets : EXEMPLE_BIS;
-    const it = liste.find((x) => String(x.id) === o.dataset.objet); if (!it) return;
-    bulle(o.querySelector("img"), `<b class="c-epique">${esc(it.nom)}</b><span class="c-blanc">${esc(it.emplacement)}</span><br><span class="c-gris">(caractéristiques de l'objet…)</span><br><span class="c-demo">AideClasse : ${esc(it.rang)} ${esc(spec().nom)} (${esc(it.emplacement)})</span>`);
+    const o = e.target.closest("[data-objet]"); if (!o || e.target.closest("[data-wh]")) return;
+    const exemple = !(spec().objets && spec().objets.length);
+    const it = (exemple ? EXEMPLE_BIS : spec().objets).find((x) => String(x.id) === o.dataset.objet); if (!it) return;
+    const addon = `<span class="c-demo">${esc(T("AideClasse : %s %s (%s)", Dn(it.rang), Dn(spec().nom), Dn(it.emplacement)))}</span>`;
+    const secours = `<b class="c-epique">${esc(it.nom)}</b><span class="c-blanc">${esc(Dn(it.emplacement))}</span>`;
+    if (exemple) bulle(o.querySelector("img"), `<div class="wh-corps">${secours}<br><span class="c-gris">(objet d'exemple)</span><div class="wh-addon">${addon}</div></div>`, false, true);
+    else bulleWh(o.querySelector("img"), "item", it.id, secours, addon);
   });
   $("defile").addEventListener("mouseout", (e) => { if (e.target.closest("[data-objet], [data-point]")) cacherBulle(); });
+  // Noms de sorts et d'objets cités dans les textes (stats, sources, ligne du prochain talent…).
+  $("scene").addEventListener("mouseover", (e) => {
+    const el = e.target.closest("[data-wh]"); if (!el) return;
+    const [type, id] = el.dataset.wh.split(":");
+    bulleWh(el, type, id, `<b>${esc(el.dataset.nom || el.textContent)}</b>`, "");
+  });
+  $("scene").addEventListener("mouseout", (e) => { if (e.target.closest("[data-wh]")) cacherBulle(); });
 
   // --- Zones d'xp : sous-onglets et bouton Point ---
   $("sousOnglets").addEventListener("click", (e) => {
     const b = e.target.closest("button[data-mode]"); if (!b) return;
-    etat.modeConseils = b.dataset.mode; $("defile").scrollTop = 0; rafraichir();
+    const sous = SOUS[etat.onglet]; if (!sous) return;
+    etat[sous.cle] = b.dataset.mode; $("defile").scrollTop = 0; rafraichir();
   });
   $("defile").addEventListener("click", (e) => {
     const b = e.target.closest("[data-point]"); if (!b) return;
     const p = points[+b.dataset.point];
     etat.way = commandeWay(p); $("lien").value = etat.way; sauver();
-    chat(prefixe + (etat.tomtom ? `point TomTom posé : ${esc(p.title)} (${p.x}, ${p.y}).`
-      : `point posé sur ta carte : ${esc(p.title)} (${p.x}, ${p.y}).`));
+    chat(prefixe + esc(T(etat.tomtom ? "point TomTom posé : %s (%s, %s)." : "point posé sur ta carte : %s (%s, %s).", p.title, p.x, p.y)));
   });
   $("defile").addEventListener("mouseover", (e) => {
     const b = e.target.closest("[data-point]"); if (!b) return;
     const p = points[+b.dataset.point];
-    bulle(b, `<b>${esc(p.title)}</b><span class="c-blanc">${esc(commandeWay(p))}</span><br><span class="c-vert">${etat.tomtom ? "Clic : flèche TomTom vers ce lieu." : "Clic : point sur la carte (TomTom conseillé pour la flèche)."}</span>`, true);
+    bulle(b, `<b>${esc(p.title)}</b><span class="c-blanc">${esc(commandeWay(p))}</span><br><span class="c-vert">${esc(T(etat.tomtom ? "Clic : flèche TomTom vers ce lieu." : "Clic : point sur la carte (TomTom conseillé pour la flèche)."))}</span>`, true);
   });
   $("choixFaction").addEventListener("click", (e) => {
     const b = e.target.closest("button[data-faction]"); if (!b) return;
@@ -662,10 +852,11 @@ body {
     f.style.top = Math.min(Math.max(0, e.clientY - s.top - tire.dy), s.height - 40) + "px";
   });
   $("barre").addEventListener("pointerup", () => { tire = null; });
-  $("fermer").addEventListener("click", () => { $("fenetre").hidden = true; fermerMenu(); });
+  $("fermer").addEventListener("click", () => { $("fenetre").hidden = true; fermerMenu(); cacherBulle(); });
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     if (!$("menuBuild").hidden) { fermerMenu(); $("choixBuild").focus(); return; }
+    cacherBulle();
     if (document.activeElement !== $("saisie")) $("fenetre").hidden = true;
   });
   $("lien").addEventListener("focus", (e) => e.target.select());
@@ -692,7 +883,7 @@ body {
     $("choixClasse").appendChild(b);
   }
   $("dateMaj").textContent = classe.majLe;
-  chat(prefixe + `chargé (données Wowhead du ${esc(classe.majLe)}). Tape /aideclasse ou clique sur l'icône de la minimap.`);
+  chat(prefixe + esc(T("chargé (données Wowhead du %s). Tape /aideclasse ou clique sur l'icône de la minimap.", classe.majLe)));
   etat.vue = Math.max(10, Math.min(60, etat.niveau));
   montrer();
 })();

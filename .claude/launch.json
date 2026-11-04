@@ -7,6 +7,13 @@
       "runtimeArgs": ["-m", "http.server", "8765", "--bind", "127.0.0.1", "--directory", "Simulateur"],
       "port": 8765,
       "autoPort": false
+    },
+    {
+      "name": "simulateur-langue",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8791", "--bind", "127.0.0.1", "--directory", "Simulateur"],
+      "port": 8791,
+      "autoPort": false
     }
   ]
 }

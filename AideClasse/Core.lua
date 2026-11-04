@@ -7,7 +7,8 @@ ns.version = "0.5.0"
 local defaults = {
     minimap = { angle = 225, hide = false },
     lastTab = "talents",
-    conseilsMode = "classe", -- sous-onglet de Conseils : "classe" ou "zones"
+    conseilsMode = "classe", -- sous-onglet de Conseils : "classe", "rotation" ou "zones"
+    stuffMode = "equipement", -- sous-onglet de Stuff : "equipement" ou "enchants"
     spec = {},   -- [classe] = "affliction"
     build = {},  -- [classe..spec] = numéro du build choisi
 }
@@ -131,7 +132,7 @@ function ns.SpellName(id, fallback)
         if ok then name = n end
     end
     if name and name ~= "" then return name end
-    return (fallback and fallback ~= "") and fallback or ("sort " .. id)
+    return (fallback and fallback ~= "") and fallback or ns.T("sort %d", id)
 end
 
 function ns.ItemName(id, fallback)
@@ -144,7 +145,7 @@ function ns.ItemName(id, fallback)
     if name then return name end
     -- Pas encore en cache : on demande l'objet au serveur, l'affichage se met à jour ensuite.
     if C_Item and C_Item.RequestLoadItemDataByID then pcall(C_Item.RequestLoadItemDataByID, id) end
-    return (fallback and fallback ~= "") and fallback or ("objet " .. id)
+    return (fallback and fallback ~= "") and fallback or ns.T("objet %d", id)
 end
 
 -- Remplace {s:ID:Nom} et {i:ID:Nom} (produits par la mise à jour) par les noms du jeu.
@@ -256,9 +257,9 @@ f:SetScript("OnEvent", function(self, event, arg1)
         if ns.HookTooltips then ns.HookTooltips() end
         local classData = ns.GetClassData()
         if classData then
-            ns.Print("chargé (données Wowhead du " .. (classData.majLe or "?") .. "). Tape /aideclasse ou clique sur l'icône de la minimap.")
+            ns.Print(ns.T("chargé (données Wowhead du %s). Tape /aideclasse ou clique sur l'icône de la minimap.", classData.majLe or "?"))
         else
-            ns.Print("pas encore de données pour ta classe. Tape /aideclasse pour plus d'infos.")
+            ns.Print(ns.T("pas encore de données pour ta classe. Tape /aideclasse pour plus d'infos."))
         end
     elseif event ~= "ADDON_LOADED" then
         refreshSoon()
@@ -274,21 +275,36 @@ SlashCmdList["AIDECLASSE"] = function(msg)
     if msg == "minimap" then
         ns.db.minimap.hide = not ns.db.minimap.hide
         if ns.UpdateMinimapButton then ns.UpdateMinimapButton() end
-        ns.Print(ns.db.minimap.hide and "icône minimap cachée." or "icône minimap affichée.")
+        ns.Print(ns.T(ns.db.minimap.hide and "icône minimap cachée." or "icône minimap affichée."))
+    elseif msg == "fr" or msg == "en" then
+        ns.SetLang(msg)
+        ns.Print(ns.T("langue : français."))
+    elseif msg == "langue" or msg == "lang" or msg == "language" then
+        ns.ToggleLang()
+        ns.Print(ns.T("langue : français."))
     elseif msg == "talents" or msg == "stuff" or msg == "conseils" then
         ns.Show(msg)
     elseif msg == "zones" or msg == "zone" then
         ns.db.conseilsMode = "zones"; ns.Show("conseils")
+    elseif msg == "rotation" or msg == "rota" then
+        ns.db.conseilsMode = "rotation"; ns.Show("conseils")
+    elseif msg == "enchants" or msg == "compos" then
+        ns.db.stuffMode = "enchants"; ns.Show("stuff")
     elseif msg == "spe" or msg == "spé" then
         ns.NextSpec(); ns.Show("talents")
     elseif msg == "build" then
         ns.NextBuild(); ns.Show("talents")
+    elseif msg == "taille" or msg == "reset" then
+        ns.ResetSize(); ns.Print(ns.T("taille de la fenêtre remise par défaut."))
     elseif msg == "aide" or msg == "help" then
-        ns.Print("/aideclasse : ouvrir/fermer la fenêtre")
-        ns.Print("/aideclasse talents | stuff | conseils : ouvrir un onglet")
-        ns.Print("/aideclasse zones : zones de montée en niveau")
-        ns.Print("/aideclasse spe : spécialisation suivante — /aideclasse build : build suivant")
-        ns.Print("/aideclasse minimap : cacher/afficher l'icône")
+        ns.Print(ns.T("/aideclasse : ouvrir/fermer la fenêtre"))
+        ns.Print(ns.T("/aideclasse talents | stuff | conseils : ouvrir un onglet"))
+        ns.Print(ns.T("/aideclasse zones : zones de montée en niveau"))
+        ns.Print(ns.T("/aideclasse rotation : rotation de ta spé — /aideclasse enchants : enchantements et compos"))
+        ns.Print(ns.T("/aideclasse spe : spécialisation suivante — /aideclasse build : build suivant"))
+        ns.Print(ns.T("/aideclasse minimap : cacher/afficher l'icône"))
+        ns.Print(ns.T("/aideclasse fr | en : langue de l'interface"))
+        ns.Print(ns.T("/aideclasse taille : remettre la fenêtre à sa taille par défaut"))
     else
         ns.Toggle()
     end

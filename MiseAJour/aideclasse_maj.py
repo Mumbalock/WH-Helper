@@ -568,13 +568,13 @@ def generer_classe(token, classe, tdata, anciennes=None):
 ICONES_EXEMPLE = ["inv_helmet_06", "inv_chest_cloth_21", "inv_wand_01", "inv_misc_questionmark"]
 
 
-def icones_simulateur(toutes):
+def icones_simulateur(toutes, autres=()):
     """Télécharge (une seule fois, avec cache local) les icônes utilisées et les renvoie en data URI,
     car la page du simulateur ne peut pas charger d'images depuis un autre site."""
     import base64
     cache = os.path.join(RACINE, "Simulateur", "icones")
     os.makedirs(cache, exist_ok=True)
-    noms = set(ICONES_EXEMPLE)
+    noms = set(ICONES_EXEMPLE) | set(autres)
     for donnees in toutes.values():
         for a in donnees.get("arbres", []):
             noms.add(a["icone"])
@@ -644,6 +644,218 @@ def lire_zones():
     return lire_table_lua(source[debut:]) if debut >= 0 else []
 
 
+def evaluer_lua(source, fonctions):
+    """Lit un fichier de données Lua écrit à la main : affectations `local X = ...` / `ns.a.b = ...`,
+    tables (y compris clés [n] et tables mixtes), appels de fonctions simples (S, E, C...) et variables locales.
+    Renvoie {nom complet: valeur}. Une table mixte garde sa partie liste sous la clé "_liste"."""
+    lignes = [l for l in source.split("\n")
+              if not re.match(r"\s*local function", l) and not re.match(r"\s*local _, ns", l) and " or {}" not in l]
+    jetons = re.findall(r'--[^\n]*|"(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?|[A-Za-z_][A-Za-z0-9_]*|[{}=,()\[\]]', "\n".join(lignes))
+    jetons = [j for j in jetons if not j.startswith("--")]
+    env, res, pos = {}, {}, 0
+
+    def suivant(attendu=None):
+        nonlocal pos
+        j = jetons[pos]; pos += 1
+        if attendu and j != attendu:
+            raise ValueError(f"attendu {attendu}, trouvé {j}")
+        return j
+
+    def table():
+        liste, dico = [], {}
+        while jetons[pos] != "}":
+            if re.match(r"^[A-Za-z_]", jetons[pos]) and jetons[pos + 1] == "=":
+                cle = suivant(); suivant("=")
+                dico[cle] = valeur()
+            elif jetons[pos] == "[":
+                suivant(); cle = valeur(); suivant("]"); suivant("=")
+                dico[cle] = valeur()
+            else:
+                liste.append(valeur())
+            if jetons[pos] == ",":
+                suivant()
+        suivant("}")
+        if dico and liste:
+            dico["_liste"] = liste
+        return dico if dico else liste
+
+    def valeur():
+        j = suivant()
+        if j == "{":
+            return table()
+        if j.startswith('"'):
+            return json.loads(j)
+        if j in ("true", "false"):
+            return j == "true"
+        if j == "nil":
+            return None
+        if re.match(r"^-?\d", j):
+            return float(j) if "." in j else int(j)
+        if jetons[pos] == "(":
+            suivant(); args = []
+            while jetons[pos] != ")":
+                args.append(valeur())
+                if jetons[pos] == ",":
+                    suivant()
+            suivant(")")
+            return fonctions[j](*args)
+        v = env[j]
+        while pos < len(jetons) and jetons[pos] == "[":
+            suivant(); k = valeur(); suivant("]")
+            v = v[k]
+        return v
+
+    while pos < len(jetons):
+        chemin = []
+        while jetons[pos] != "=":
+            j = suivant()
+            if j != "local":
+                chemin.append(j)
+        suivant("=")
+        v = valeur()
+        env[chemin[-1]] = v
+        res[".".join(chemin)] = v
+    return res
+
+
+def _tranche(b, cle):
+    liste = b["_liste"] if isinstance(b, dict) else b
+    return {"min": liste[0], "max": liste[1], cle: liste[2:], "notes": b.get("notes", []) if isinstance(b, dict) else []}
+
+
+def lire_rotations():
+    """Rotations écrites à la main dans Data/Rotation.lua -> {TOKEN: {cleSpe ou "debut": [tranches]}}."""
+    chemin = os.path.join(ADDON_SRC, "Data", "Rotation.lua")
+    if not os.path.isfile(chemin):
+        return {}
+    with open(chemin, encoding="utf-8") as f:
+        src = f.read()
+    S = lambda s=None, n=None, t=None, ic=None: {"s": s, "n": n, "t": t, "ic": ic}
+    res = {}
+    for nom, v in evaluer_lua(src, {"S": S}).items():
+        if nom.startswith("ns.rotations."):
+            res[nom.split(".")[-1]] = {spe: [_tranche(b, "etapes") for b in tr] for spe, tr in v.items()}
+    return res
+
+
+def lire_enchants():
+    """Enchantements et consommables de Data/Enchants.lua -> {"profils": {...}, "specs": {...}}."""
+    chemin = os.path.join(ADDON_SRC, "Data", "Enchants.lua")
+    if not os.path.isfile(chemin):
+        return {}
+    with open(chemin, encoding="utf-8") as f:
+        src = f.read()
+    E = lambda e=None, s=None, n=None, t=None, ic=None: {"e": e, "s": s, "n": n, "t": t, "ic": ic}
+    C = lambda i=None, n=None, t=None: {"i": i, "n": n, "t": t}
+    v = evaluer_lua(src, {"E": E, "C": C})
+    profils = v.get("ns.enchantsProfils", {})
+    for p in profils.values():
+        p["compos"] = [_tranche(b, "objets") for b in p.get("compos", [])]
+    return {"profils": profils, "specs": v.get("ns.enchantsSpecs", {})}
+
+
+def infos_wowhead(sorts, objets):
+    """Nom (français) et icône de chaque sort / objet d'après l'API de tooltips Wowhead Forever.
+    Gardé en cache dans Simulateur/icones/wowhead.json. Renvoie {"spell:ID" ou "item:ID": {...} ou None}."""
+    chemin = os.path.join(RACINE, "Simulateur", "icones", "wowhead.json")
+    os.makedirs(os.path.dirname(chemin), exist_ok=True)
+    cache = {}
+    if os.path.isfile(chemin):
+        with open(chemin, encoding="utf-8") as f:
+            cache = json.load(f)
+    a_faire = [("spell", i) for i in sorted(sorts)] + [("item", i) for i in sorted(objets)]
+    for type_, i in a_faire:
+        cle = f"{type_}:{i}"
+        if cle in cache:
+            continue
+        try:
+            req = urllib.request.Request(f"https://nether.wowhead.com/forever/tooltip/{type_}/{i}?locale=2", headers={"User-Agent": UA})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                d = json.load(r)
+            cache[cle] = {"nom": d.get("name"), "icone": d.get("icon")}
+        except urllib.error.HTTPError as e:
+            cache[cle] = None if e.code == 404 else cache.get(cle)
+            if e.code != 404:
+                log(f"  {cle} : {e}")
+                cache.pop(cle, None)
+        except Exception as e:
+            log(f"  {cle} : {e}")
+        time.sleep(0.2)
+    with open(chemin, "w", encoding="utf-8") as f:
+        json.dump(cache, f, ensure_ascii=False, indent=1, sort_keys=True)
+    inconnus = sorted(k for k in (f"{t}:{i}" for t, i in a_faire) if k in cache and cache[k] is None)
+    if inconnus:
+        log("Identifiants inconnus de Wowhead Forever : " + ", ".join(inconnus))
+    return cache
+
+
+def completer_rotations_enchants(rotations, enchants):
+    """Ajoute à chaque sort / objet le nom affiché par le jeu (français) et son icône, comme le fait l'addon."""
+    sorts, objets = set(), set()
+    for classe in rotations.values():
+        for tranches in classe.values():
+            for t in tranches:
+                sorts.update(e["s"] for e in t["etapes"] if e["s"])
+    for p in enchants.get("profils", {}).values():
+        sorts.update(e["s"] for e in p.get("montee", []) + p.get("max", []) if e["s"])
+        for t in p.get("compos", []):
+            objets.update(c["i"] for c in t["objets"])
+    infos = infos_wowhead(sorts, objets)
+    noms = set()
+
+    def completer(e, cle):
+        d = infos.get(cle) if cle else None
+        if d:
+            e["ic"] = d.get("icone") or e.get("ic")
+            e["jeu"] = d.get("nom")
+        if e.get("ic"):
+            e["ic"] = e["ic"].lower()
+            noms.add(e["ic"])
+
+    for classe in rotations.values():
+        for tranches in classe.values():
+            for t in tranches:
+                for e in t["etapes"]:
+                    completer(e, e["s"] and f"spell:{e['s']}")
+    for p in enchants.get("profils", {}).values():
+        for e in p.get("montee", []) + p.get("max", []):
+            completer(e, e["s"] and f"spell:{e['s']}")
+        for t in p.get("compos", []):
+            for c in t["objets"]:
+                completer(c, f"item:{c['i']}")
+    return noms
+
+
+def _paires_lua(texte):
+    """Toutes les paires ["clé"] = "valeur" d'un bout de Lua (valeur éventuellement sur la ligne suivante)."""
+    dec = lambda s: json.loads('"' + s + '"')
+    return {dec(k): dec(v) for k, v in re.findall(
+        r'\["((?:[^"\\]|\\.)*)"\]\s*=\s*"((?:[^"\\]|\\.)*)"', texte)}
+
+
+def lire_langue():
+    """Traductions anglaises de l'addon, pour le bouton FR / EN du simulateur :
+    textes de l'interface et libellés des données (Locale.lua), conseils (ConseilsEN.lua), zones (ZonesEN.lua)."""
+    def lire(*morceaux):
+        chemin = os.path.join(ADDON_SRC, *morceaux)
+        if not os.path.isfile(chemin):
+            return ""
+        with open(chemin, encoding="utf-8") as f:
+            return f.read()
+
+    locale = lire("Locale.lua")
+    debut_donnees = locale.find("local DATA_EN")
+    ui = _paires_lua(locale[:debut_donnees] if debut_donnees >= 0 else locale)
+    donnees = _paires_lua(locale[debut_donnees:]) if debut_donnees >= 0 else {}
+
+    conseils, source = {}, lire("Data", "ConseilsEN.lua")
+    for token, bloc in re.findall(r"ns\.conseilsEN\.(\w+)\s*=\s*\{(.*?)\n\}", source, re.S):
+        conseils[token] = [json.loads('"' + s + '"') for s in re.findall(r'"((?:[^"\\]|\\.)*)"', bloc)]
+
+    zones = _paires_lua(lire("Data", "ZonesEN.lua"))
+    return {"ui": ui, "donnees": donnees, "conseils": conseils, "zones": zones}
+
+
 def regenerer_simulateur():
     """Refait le simulateur sans rien télécharger, avec les données de classes déjà présentes dans la page."""
     page = os.path.join(RACINE, "Simulateur", "simulateur.html")
@@ -669,7 +881,11 @@ def generer_simulateur(toutes):
             bloc = re.search(r"ns\.conseils\.%s\s*=\s*\{(.*?)\n\}" % token, source, re.S)
             if bloc:
                 conseils[token] = [json.loads('"' + s + '"') for s in re.findall(r'"((?:[^"\\]|\\.)*)"', bloc.group(1))]
-    js = json.dumps({"classes": toutes, "conseils": conseils, "zones": lire_zones(), "icones": icones_simulateur(toutes)},
+    rotations, enchants = lire_rotations(), lire_enchants()
+    autres_icones = completer_rotations_enchants(rotations, enchants)
+    js = json.dumps({"classes": toutes, "conseils": conseils, "zones": lire_zones(),
+                     "rotations": rotations, "enchants": enchants, "anglais": lire_langue(),
+                     "icones": icones_simulateur(toutes, autres_icones)},
                     ensure_ascii=False).replace("</", "<\\/")
     with open(modele, encoding="utf-8") as f:
         page = f.read().replace("__DONNEES__", js)
