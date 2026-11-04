@@ -11,6 +11,7 @@ local defaults = {
     stuffMode = "equipement", -- sous-onglet de Stuff : "equipement" ou "enchants"
     spec = {},   -- [classe] = "affliction"
     build = {},  -- [classe..spec] = numéro du build choisi
+    replis = {}, -- [clé de section] = true quand la section est repliée
 }
 
 local function applyDefaults(dst, src)
@@ -152,10 +153,10 @@ end
 function ns.Texte(s)
     if not s then return "" end
     s = s:gsub("{s:(%d+):([^}]*)}", function(id, nom)
-        return "|cff71d5ff" .. ns.SpellName(tonumber(id), nom) .. "|r"
+        return "|cff71d5ff|Hspell:" .. id .. "|h" .. ns.SpellName(tonumber(id), nom) .. "|h|r"
     end)
     s = s:gsub("{i:(%d+):([^}]*)}", function(id, nom)
-        return "|cffa335ee" .. ns.ItemName(tonumber(id), nom) .. "|r"
+        return "|cffa335ee|Hitem:" .. id .. "|h" .. ns.ItemName(tonumber(id), nom) .. "|h|r"
     end)
     return s
 end

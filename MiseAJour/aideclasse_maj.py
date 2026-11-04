@@ -853,7 +853,8 @@ def lire_langue():
         conseils[token] = [json.loads('"' + s + '"') for s in re.findall(r'"((?:[^"\\]|\\.)*)"', bloc)]
 
     zones = _paires_lua(lire("Data", "ZonesEN.lua"))
-    return {"ui": ui, "donnees": donnees, "conseils": conseils, "zones": zones}
+    textes = _paires_lua(lire("Data", "TextesEN.lua"))   # Enchants.lua et Rotation.lua
+    return {"ui": ui, "donnees": donnees, "conseils": conseils, "zones": zones, "textes": textes}
 
 
 def regenerer_simulateur():

@@ -21,6 +21,8 @@ Data\Conseils.lua
 Data\ConseilsEN.lua
 Data\Rotation.lua
 Data\Enchants.lua
+Data\TextesEN.lua
+Data\Sorts.lua
 Data\Zones.lua
 Data\ZonesEN.lua
 UI.lua

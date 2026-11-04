@@ -14,6 +14,13 @@
       "runtimeArgs": ["-m", "http.server", "8791", "--bind", "127.0.0.1", "--directory", "Simulateur"],
       "port": 8791,
       "autoPort": false
+    },
+    {
+      "name": "simulateur-taille",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8793", "--bind", "127.0.0.1", "--directory", "Simulateur"],
+      "port": 8793,
+      "autoPort": false
     }
   ]
 }

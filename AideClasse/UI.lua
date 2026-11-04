@@ -23,7 +23,7 @@ local tabButtons, specButtons = {}, {}
 local talentsView, scrollView, scroll, content, text
 local buildButton, buildMenu, trees, slider, levelText, infoText, playerText, linkBox
 local buildLabel, linkLabel, langButton
-local itemRows, zoneRows = {}, {}
+local itemRows, zoneRows, headerRows = {}, {}, {}
 local subBar, subButtons = nil, {} -- subButtons[onglet][mode] = bouton
 local viewLevel -- niveau affiché par la barre
 local ZONES_URL = "https://www.wowhead.com/forever/zones"
@@ -473,13 +473,167 @@ local function getItemRow(i)
     return row
 end
 
--- Zones d'xp ------------------------------------------------------------------------
+-- Liens de sorts dans les textes : couleur + infobulle au survol --------------------
+
+-- Infobulle d'un lien |Hspell:ID|h ou |Hitem:ID|h. Maj+clic : le lien du jeu dans la discussion.
+local function enableLinks(f)
+    if not f.SetHyperlinksEnabled then return end
+    f:EnableMouse(true)
+    f:SetHyperlinksEnabled(true)
+    f:SetScript("OnHyperlinkEnter", function(self, link)
+        local kind, id = tostring(link):match("^(%a+):(%d+)")
+        id = tonumber(id)
+        if not id then return end
+        GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+        local ok
+        if kind == "spell" then
+            ok = pcall(GameTooltip.SetSpellByID, GameTooltip, id)
+            if not ok or GameTooltip:NumLines() == 0 then GameTooltip:SetText(ns.SpellName(id)) end
+        elseif kind == "item" then
+            ok = pcall(GameTooltip.SetItemByID, GameTooltip, id)
+            if not ok or GameTooltip:NumLines() == 0 then GameTooltip:SetText(ns.ItemName(id)) end
+        end
+        GameTooltip:Show()
+    end)
+    f:SetScript("OnHyperlinkLeave", function() GameTooltip:Hide() end)
+    f:SetScript("OnHyperlinkClick", function(_, link)
+        if not (IsModifiedClick and IsModifiedClick("CHATLINK")) then return end
+        local kind, id = tostring(link):match("^(%a+):(%d+)")
+        id = tonumber(id)
+        local get
+        if kind == "spell" then get = (C_Spell and C_Spell.GetSpellLink) or GetSpellLink
+        elseif kind == "item" then get = (C_Item and C_Item.GetItemInfo) or GetItemInfo end
+        if not (id and get) then return end
+        local ok, a, b = pcall(get, id)
+        local l = (kind == "item") and b or a
+        if ok and type(l) == "string" and ChatEdit_InsertLink then ChatEdit_InsertLink(l) end
+    end)
+end
+
+-- Noms de sorts reconnus dans les textes, par classe : sorts de la rotation, talents,
+-- et la liste de Data\Sorts.lua. Les noms les plus longs sont cherchés en premier.
+local spellDicts = {}
+local function spellDict(classData)
+    local token = classData and classData.token
+    if not token then return {}, {} end
+    local d = spellDicts[token]
+    if d then return d.ids, d.names end
+    local ids, names = {}, {}
+    local function add(name, id)
+        if id and type(name) == "string" and #name >= 4 and not ids[name] and not name:find("^sort %d") then
+            ids[name] = id
+            table.insert(names, name)
+        end
+    end
+    for _, e in ipairs((ns.sortsConseils and ns.sortsConseils[token]) or {}) do
+        add(e[2], e[1]); add(e[3], e[1]); add(ns.SpellName(e[1], e[2]), e[1])
+    end
+    for _, specBrackets in pairs((ns.rotations and ns.rotations[token]) or {}) do
+        for _, b in ipairs(specBrackets) do
+            for i = 3, #b do
+                local e = b[i]
+                if e.s then
+                    add(e.n, e.s)
+                    add(ns.textesEN and ns.textesEN[e.n], e.s)
+                    add(ns.SpellName(e.s, e.n), e.s)
+                end
+            end
+        end
+    end
+    for _, tr in ipairs(classData.arbres or {}) do
+        for _, t in ipairs(tr.talents or {}) do
+            add(t.nom, t.sort); add(ns.SpellName(t.sort, t.nom), t.sort)
+        end
+    end
+    table.sort(names, function(a, b) return #a > #b end)
+    spellDicts[token] = { ids = ids, names = names }
+    return ids, names
+end
+
+-- Lettre (ASCII, ou lettre accentuée en UTF-8 : octet de tête 0xC3) ?
+local function letterBefore(s, i)
+    if i < 1 then return false end
+    local c = s:byte(i)
+    if c >= 0x80 and c < 0xC0 then return i > 1 and s:byte(i - 1) == 0xC3 end
+    return (c >= 65 and c <= 90) or (c >= 97 and c <= 122)
+end
+local function letterAfter(s, i)
+    local c = s:byte(i)
+    if not c then return false end
+    if c == 0xC3 then return true end
+    return (c >= 65 and c <= 90) or (c >= 97 and c <= 122)
+end
+
+-- Colore les noms de sorts d'un texte et en fait des liens (infobulle au survol).
+local function linkify(str, classData)
+    if not str or str == "" then return str end
+    local ids, names = spellDict(classData)
+    local saved = {}
+    for _, name in ipairs(names) do
+        local start = 1
+        while true do
+            local a, b = str:find(name, start, true)
+            if not a then break end
+            if not letterBefore(str, a - 1) and not letterAfter(str, b + 1) then
+                saved[#saved + 1] = "|cff71d5ff|Hspell:" .. ids[name] .. "|h" .. name .. "|h|r"
+                local mark = "\1" .. #saved .. "\2"
+                str = str:sub(1, a - 1) .. mark .. str:sub(b + 1)
+                start = a + #mark
+            else
+                start = b + 1
+            end
+        end
+    end
+    return (str:gsub("\1(%d+)\2", function(n) return saved[tonumber(n)] end))
+end
+
+-- Sections dépliables ------------------------------------------------------------
+
+local PLUS, MINUS = "Interface\\Buttons\\UI-PlusButton-Up", "Interface\\Buttons\\UI-MinusButton-Up"
+
+local function isCollapsed(key)
+    return key and ns.db and ns.db.replis and ns.db.replis[key] or false
+end
+
+local function getHeaderRow(i)
+    local row = headerRows[i]
+    if row then return row end
+    row = CreateFrame("Button", nil, content)
+    row:SetHeight(20)
+    row.arrow = row:CreateTexture(nil, "ARTWORK")
+    row.arrow:SetSize(14, 14)
+    row.arrow:SetPoint("LEFT", 0, 0)
+    row.text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    row.text:SetPoint("LEFT", row.arrow, "RIGHT", 5, 0)
+    row.text:SetPoint("RIGHT", -4, 0)
+    row.text:SetJustifyH("LEFT")
+    row.text:SetWordWrap(false)
+    row:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+    row:SetScript("OnClick", function(self)
+        if not (ns.db and self.key) then return end
+        ns.db.replis = ns.db.replis or {}
+        ns.db.replis[self.key] = (not ns.db.replis[self.key]) or nil
+        if PlaySound and SOUNDKIT then pcall(PlaySound, SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON) end
+        ns.Refresh()
+    end)
+    headerRows[i] = row
+    return row
+end
+
+local function hideRows()
+    for _, r in ipairs(itemRows) do r:Hide() end
+    for _, r in ipairs(zoneRows) do r:Hide() end
+    for _, r in ipairs(headerRows) do r:Hide() end
+end
+
+-- Lignes de texte (avec bouton Point pour les zones d'xp) ---------------------------
 
 local function getZoneRow(i)
     local row = zoneRows[i]
     if row then return row end
     row = CreateFrame("Frame", nil, content)
     row:SetWidth(contentW)
+    enableLinks(row)
     row.text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     row.text:SetPoint("TOPLEFT", 0, 0)
     row.text:SetWidth(contentW - 90)
@@ -529,6 +683,104 @@ local function zoneVisible(z, faction)
     return not z.camp or not faction or z.camp == faction
 end
 
+local function spellIcon(id, fallback)
+    if id then
+        local fn = (C_Spell and C_Spell.GetSpellTexture) or GetSpellTexture
+        if fn then
+            local ok, tex = pcall(fn, id)
+            if ok and tex then return tex end
+        end
+    end
+    return icon(fallback)
+end
+
+local function inlineIcon(tex, size)
+    size = size or 20
+    return "|T" .. tostring(tex) .. ":" .. size .. ":" .. size .. ":0:0:64:64:5:59:5:59|t"
+end
+
+-- Le niveau est-il dans la tranche [a, b] ? `strict` : b exclu même à 60 (quand une tranche « 60 » existe).
+local function inBracket(level, a, b, strict)
+    if a == b then return level == a end
+    return level >= a and (level < b or (not strict and b == 60 and level == 60))
+end
+
+local function bracketTitle(a, b)
+    return (a == b) and T("Niveau %d", a) or T("Niveaux %d à %d", a, b)
+end
+
+-- Titre de section : doré, ou vert avec « (ton niveau) » quand c'est la tranche du personnage.
+local function sectionTitle(title, current)
+    if current then return GREEN .. title .. "  " .. T("(ton niveau)") .. "|r" end
+    return GOLD .. title .. "|r"
+end
+
+-- Empile des titres de section (cliquables pour replier), des lignes de texte et des lignes à icône.
+-- Après S.header, tout ce qui suit appartient à la section jusqu'au S.header ou S.endSection suivant.
+local function newStack(y)
+    local S = { y = y, ni = 0, nt = 0, nh = 0, hidden = false }
+    function S.header(str, key, gap, indent)
+        indent = indent or 0
+        S.nh = S.nh + 1
+        local row = getHeaderRow(S.nh)
+        S.y = S.y - (gap or 0)
+        row:ClearAllPoints()
+        row:SetPoint("TOPLEFT", content, "TOPLEFT", indent, S.y)
+        row:SetWidth(contentW - indent)
+        row.indent, row.key = indent, key
+        local closed = isCollapsed(key)
+        row.arrow:SetTexture(closed and PLUS or MINUS)
+        row.text:SetText(str)
+        row:Show()
+        S.y = S.y - 21
+        S.hidden = closed
+    end
+    function S.endSection() S.hidden = false end
+    function S.gap(n) if not S.hidden then S.y = S.y - n end end
+    function S.line(str, gap, indent, point)
+        if S.hidden then return end
+        indent = indent or 0
+        S.nt = S.nt + 1
+        local row = getZoneRow(S.nt)
+        row:ClearAllPoints()
+        S.y = S.y - (gap or 0)
+        row:SetPoint("TOPLEFT", content, "TOPLEFT", indent, S.y)
+        row.indent, row.pad = indent, indent + (point and 90 or 10)
+        row:SetWidth(contentW - indent)
+        row.text:SetWidth(contentW - row.pad)
+        row.text:SetText(str)
+        if point then
+            row.btn.point = point
+            row.btn:SetText(T("Point"))
+            row.btn:Show()
+        else
+            row.btn:Hide()
+        end
+        local h = math.max(row.text:GetStringHeight(), point and 18 or 0)
+        row:SetHeight(h)
+        row:Show()
+        S.y = S.y - h - 3
+    end
+    function S.iconRow(tex, str, tip, x, h)
+        if S.hidden then return end
+        x, h = x or 12, h or 28
+        S.ni = S.ni + 1
+        local row = getItemRow(S.ni)
+        row:ClearAllPoints()
+        row:SetPoint("TOPLEFT", content, "TOPLEFT", x, S.y)
+        row:SetSize(contentW - x, h)
+        row.icon:SetTexture(tex)
+        row.text:SetText(str)
+        row.itemID, row.spellID = tip.item, tip.spell
+        row.tipTitle, row.tipNote = tip.title, tip.note
+        row:Show()
+        S.y = S.y - h - 1
+    end
+    return S
+end
+
+-- Zones d'xp ------------------------------------------------------------------------
+
 local function refreshZones()
     local faction = UnitFactionGroup("player")
     if faction ~= "Alliance" and faction ~= "Horde" then faction = nil end
@@ -557,24 +809,9 @@ local function refreshZones()
         " ",
     }
     text:SetText(table.concat(head, "\n"))
-    local y = -(text:GetStringHeight() + 6)
+    local S = newStack(-(text:GetStringHeight() + 6))
 
-    local n = 0
-    local function addRow(str, point, gap)
-        n = n + 1
-        local row = getZoneRow(n)
-        row:ClearAllPoints()
-        y = y - (gap or 0)
-        row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, y)
-        row.text:SetText(str)
-        row.btn:SetText(T("Point"))
-        if point then row.btn.point = point; row.btn:Show() else row.btn:Hide() end
-        local h = math.max(row.text:GetStringHeight(), point and 18 or 0)
-        row:SetHeight(h)
-        row:Show()
-        y = y - h - 2
-    end
-
+    local ZT = ns.ZT or function(s) return s end
     for _, z in ipairs(list) do
         local nom = zoneName(z)
         local col, tag = WHITE, ""
@@ -583,112 +820,47 @@ local function refreshZones()
         elseif level < z.min - 5 then col = ORANGE end
         local camp = z.camp or T("Contestée")
         if z.nouveau then camp = camp .. T(", nouvelle zone Forever") end
-        addRow(col .. nom .. "|r  " .. GOLD .. T("niv. %d–%d", z.min, z.max) .. "|r  " .. GREY .. "(" .. camp .. ")|r" .. GREEN .. tag .. "|r", nil, 8)
+        S.header(col .. nom .. "|r  " .. GOLD .. T("niv. %d–%d", z.min, z.max) .. "|r  " .. GREY .. "(" .. camp .. ")|r" .. GREEN .. tag .. "|r",
+            "zone:" .. z.nom, 6)
 
-        local ZT = ns.ZT or function(s) return s end
         local acces = ZT((faction and z.acces[faction]) or z.acces.tous)
         if not acces then
             acces = z.acces.Alliance and z.acces.Horde and T("Alliance : %s Horde : %s", ZT(z.acces.Alliance), ZT(z.acces.Horde))
                 or ZT(z.acces.Alliance or z.acces.Horde)
         end
-        if acces then addRow("     " .. T("Accès : ") .. acces) end
+        if acces then S.line(T("Accès : ") .. acces, 0, 19) end
 
         local shown = 0
         for _, h in ipairs(z.hubs or {}) do
             if not h.f or not faction or h.f == faction then
                 local map = h.map or z.map
                 local hubNom = ZT(h.nom)
-                addRow("     • " .. hubNom .. GREY .. "  " .. h.x .. ", " .. h.y .. "|r",
+                S.line("• " .. hubNom .. GREY .. "  " .. h.x .. ", " .. h.y .. "|r", 0, 19,
                     { map = map, x = h.x, y = h.y, title = hubNom })
                 shown = shown + 1
             end
         end
         if not z.hubs and z.map then
-            addRow("     • " .. T("Centre de la zone") .. GREY .. "  50, 50|r", { map = z.map, x = 50, y = 50, title = nom })
+            S.line("• " .. T("Centre de la zone") .. GREY .. "  50, 50|r", 0, 19, { map = z.map, x = 50, y = 50, title = nom })
         elseif z.nouveau then
-            addRow("     " .. GREY .. T("Coordonnées pas encore connues pour cette nouvelle zone.") .. "|r")
+            S.line(GREY .. T("Coordonnées pas encore connues pour cette nouvelle zone.") .. "|r", 0, 19)
         elseif shown == 0 then
-            addRow("     " .. GREY .. T("Pas de camp de ta faction dans cette zone.") .. "|r")
+            S.line(GREY .. T("Pas de camp de ta faction dans cette zone.") .. "|r", 0, 19)
         end
     end
 
-    y = y - 12
-    n = n + 1
-    local last = getZoneRow(n)
-    last:ClearAllPoints()
-    last:SetPoint("TOPLEFT", content, "TOPLEFT", 0, y)
-    last.text:SetText(GREY .. T("Niveau 60 : Mont Hyjal (nouvelle zone de fin de jeu). Source : %s", ZONES_URL) .. "|r")
-    last.btn:Hide()
-    last:SetHeight(last.text:GetStringHeight())
-    last:Show()
-    y = y - last:GetHeight()
-    content:SetHeight(-y + 10)
+    S.endSection()
+    S.line(GREY .. T("Niveau 60 : Mont Hyjal (nouvelle zone de fin de jeu). Source : %s", ZONES_URL) .. "|r", 12)
+    content:SetHeight(-S.y + 10)
 end
 
 -- Rotation et Enchants & compos (lignes avec icônes) ------------------------------
 
-local function spellIcon(id, fallback)
-    if id then
-        local fn = (C_Spell and C_Spell.GetSpellTexture) or GetSpellTexture
-        if fn then
-            local ok, tex = pcall(fn, id)
-            if ok and tex then return tex end
-        end
-    end
-    return icon(fallback)
-end
-
-local function inlineIcon(tex, size)
-    size = size or 20
-    return "|T" .. tostring(tex) .. ":" .. size .. ":" .. size .. ":0:0:64:64:5:59:5:59|t"
-end
-
--- Le niveau est-il dans la tranche [a, b] ? `strict` : b exclu même à 60 (quand une tranche « 60 » existe).
-local function inBracket(level, a, b, strict)
-    if a == b then return level == a end
-    return level >= a and (level < b or (not strict and b == 60 and level == 60))
-end
-
-local function bracketTitle(a, b)
-    return (a == b) and T("Niveau %d", a) or T("Niveaux %d à %d", a, b)
-end
-
--- Empile des lignes (texte ou icône) sous le texte d'en-tête.
-local function newStack(y)
-    local S = { y = y, ni = 0, nt = 0 }
-    function S.line(str, gap)
-        S.nt = S.nt + 1
-        local row = getZoneRow(S.nt)
-        row:ClearAllPoints()
-        S.y = S.y - (gap or 0)
-        row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, S.y)
-        row.text:SetText(str)
-        row.btn:Hide()
-        local h = row.text:GetStringHeight()
-        row:SetHeight(h)
-        row:Show()
-        S.y = S.y - h - 3
-    end
-    function S.iconRow(tex, str, tip)
-        S.ni = S.ni + 1
-        local row = getItemRow(S.ni)
-        row:ClearAllPoints()
-        row:SetPoint("TOPLEFT", content, "TOPLEFT", 12, S.y)
-        row:SetHeight(28)
-        row.icon:SetTexture(tex)
-        row.text:SetText(str)
-        row.itemID, row.spellID = tip.item, tip.spell
-        row.tipTitle, row.tipNote = tip.title, tip.note
-        row:Show()
-        S.y = S.y - 29
-    end
-    return S
-end
-
-local function untranslatedNote(lines)
-    if ns.GetLang() == "en" then
-        table.insert(lines, GREY .. T("Les textes de cette section ne sont pas encore traduits.") .. "|r")
-    end
+-- Textes d'Enchants.lua / Rotation.lua dans la langue choisie (Data\TextesEN.lua).
+local TX = function(s) return ns.TX and ns.TX(s) or s end
+-- En anglais, notre traduction passe avant le nom donné par le jeu (le client peut être en français).
+local function englishName(s)
+    return ns.GetLang() == "en" and s and ns.textesEN and ns.textesEN[s] or nil
 end
 
 local function refreshRotation(classData, spec)
@@ -705,7 +877,6 @@ local function refreshRotation(classData, spec)
         GOLD .. T("Rotation – %s", D(spec.nom)) .. "|r",
         GREY .. T("Du haut vers le bas : lance le premier sort disponible. Survole une icône pour le détail.") .. "|r",
     }
-    untranslatedNote(lines)
     for _, b in ipairs(brackets) do
         if inBracket(level, b[1], b[2]) then
             local chain = {}
@@ -722,20 +893,16 @@ local function refreshRotation(classData, spec)
         S.line(GREY .. T("Pas encore de rotation écrite pour cette spécialisation.") .. "|r", 6)
     end
     for _, b in ipairs(brackets) do
-        local title = bracketTitle(b[1], b[2])
-        if inBracket(level, b[1], b[2]) then
-            S.line(GREEN .. "> " .. title .. "  " .. T("(ton niveau)") .. "|r", 12)
-        else
-            S.line(GOLD .. title .. "|r", 12)
-        end
+        S.header(sectionTitle(bracketTitle(b[1], b[2]), inBracket(level, b[1], b[2])),
+            "rot:" .. classData.token .. ":" .. tostring(specKey) .. ":" .. b[1] .. "-" .. b[2], 10)
         for i = 3, #b do
             local e = b[i]
-            local name = e.s and ns.SpellName(e.s, e.n) or e.n
+            local name = englishName(e.n) or (e.s and ns.SpellName(e.s, e.n)) or e.n
             S.iconRow(spellIcon(e.s, e.ic),
-                WHITE .. (i - 2) .. ".|r  |cff71d5ff" .. name .. "|r" .. (e.t and (GREY .. "  –  " .. e.t .. "|r") or ""),
+                WHITE .. (i - 2) .. ".|r  |cff71d5ff" .. name .. "|r" .. (e.t and (GREY .. "  –  " .. TX(e.t) .. "|r") or ""),
                 { spell = e.s, title = name })
         end
-        for _, n in ipairs(b.notes or {}) do S.line("     " .. ORANGE .. "•|r " .. n) end
+        for _, n in ipairs(b.notes or {}) do S.line(ORANGE .. "•|r " .. linkify(TX(n), classData), 0, 24) end
     end
     content:SetHeight(-S.y + 10)
 end
@@ -748,9 +915,8 @@ local function refreshEnchants(classData, spec)
 
     local lines = { GOLD .. T("Enchantements et consommables (%s)", D(spec.nom)) .. "|r" }
     if P then
-        table.insert(lines, GREY .. T("Profil : %s. Bases de WoW Classic : WoW Forever ajoute des recettes, vérifie sur Wowhead.", P.nom) .. "|r")
+        table.insert(lines, GREY .. T("Profil : %s. Bases de WoW Classic : WoW Forever ajoute des recettes, vérifie sur Wowhead.", TX(P.nom)) .. "|r")
     end
-    untranslatedNote(lines)
     text:SetText(table.concat(lines, "\n"))
 
     local S = newStack(-(text:GetStringHeight() + 8))
@@ -763,124 +929,111 @@ local function refreshEnchants(classData, spec)
     local function enchantRows(list)
         for _, e in ipairs(list) do
             local tex = e.s and spellIcon(e.s, e.ic or "Trade_Engraving") or icon(e.ic or "Trade_Engraving")
-            S.iconRow(tex, WHITE .. (D(e.e) or "") .. "|r  |cff1eff00" .. e.n .. "|r" ..
-                (e.t and (GREY .. "  –  " .. e.t .. "|r") or ""), { spell = e.s, title = e.n, note = e.t })
+            local nom, note = TX(e.n), TX(e.t)
+            S.iconRow(tex, WHITE .. (TX(e.e) or "") .. "|r  |cff1eff00" .. nom .. "|r" ..
+                (note and (GREY .. "  –  " .. note .. "|r") or ""), { spell = e.s, title = nom, note = note })
         end
     end
-    local function section(title, current)
-        if current then S.line(GREEN .. "> " .. title .. "  " .. T("(ton niveau)") .. "|r", 12)
-        else S.line(GOLD .. title .. "|r", 12) end
-    end
 
-    section(T("Enchantements pendant la montée"), level < 60)
+    S.header(sectionTitle(T("Enchantements pendant la montée"), level < 60), "ench:" .. key .. ":montee", 10)
     enchantRows(P.montee or {})
-    section(T("Enchantements au niveau 60"), level >= 60)
+    S.header(sectionTitle(T("Enchantements au niveau 60"), level >= 60), "ench:" .. key .. ":max", 10)
     enchantRows(P.max or {})
 
+    S.endSection()
     S.line(GOLD .. T("Consommables par tranche de niveau") .. "|r", 16)
     local hasMax = false
     for _, b in ipairs(P.compos or {}) do if b[1] == b[2] then hasMax = true end end
     for _, b in ipairs(P.compos or {}) do
-        local title = bracketTitle(b[1], b[2])
-        if inBracket(level, b[1], b[2], hasMax) then
-            S.line("  " .. GREEN .. "> " .. title .. "  " .. T("(ton niveau)") .. "|r", 6)
-        else
-            S.line("  " .. WHITE .. title .. "|r", 6)
-        end
+        S.header(sectionTitle(bracketTitle(b[1], b[2]), inBracket(level, b[1], b[2], hasMax)),
+            "ench:" .. key .. ":compos:" .. b[1] .. "-" .. b[2], 4, 12)
         for i = 3, #b do
             local c = b[i]
-            S.iconRow(itemIcon({ id = c.i }), "|cffffffff" .. ns.ItemName(c.i, c.n) .. "|r" ..
-                (c.t and (GREY .. "  –  " .. c.t .. "|r") or ""), { item = c.i })
+            S.iconRow(itemIcon({ id = c.i }), "|cffffffff" .. (englishName(c.n) or ns.ItemName(c.i, c.n)) .. "|r" ..
+                (c.t and (GREY .. "  –  " .. TX(c.t) .. "|r") or ""), { item = c.i }, 24)
         end
     end
     content:SetHeight(-S.y + 10)
 end
 
+-- Conseils de classe : une section par titre « ## » ----------------------------------
+
+local function refreshClasse(classData)
+    local liste = (ns.conseils and ns.conseils[classData.token]) or {}
+    if ns.GetLang() == "en" and ns.conseilsEN and ns.conseilsEN[classData.token] then
+        liste = ns.conseilsEN[classData.token]
+    end
+    text:SetText("")
+    local S = newStack(0)
+    if #liste == 0 then
+        S.line(GREY .. T("Pas encore de conseils écrits pour cette classe. " ..
+            "Le lien en bas de la fenêtre ouvre le guide Wowhead de ta spécialisation.") .. "|r")
+    end
+    local level = UnitLevel("player") or 1
+    local first = true
+    for _, c in ipairs(liste) do
+        local titre = c:match("^##%s*(.+)$")
+        if titre then
+            local a, b = titre:match("(%d+) à (%d+)")
+            if not a then a, b = titre:match("(%d+) to (%d+)") end
+            a, b = tonumber(a), tonumber(b)
+            local shown = (a and b) and T("Niveaux %d à %d", a, b) or D(titre)
+            local current = a and b and level >= a and (level < b or (b == 60 and level == 60))
+            -- La clé suit la position de la section : elle reste la même en français et en anglais.
+            S.header(sectionTitle(shown, current), "classe:" .. classData.token .. ":" .. S.nh, first and 0 or 10)
+            first = false
+        else
+            S.line(GREY .. "•|r " .. linkify(c, classData), 0, 19)
+        end
+    end
+    S.endSection()
+    S.line(GREY .. T("Talents, stats et BiS : %s, mis à jour le %s.",
+        D(classData.source or "?"), classData.majLe or "?") .. "|r", 16)
+    S.line(GREY .. "AideClasse v" .. ns.version .. "|r")
+    content:SetHeight(-S.y + 10)
+end
+
+-- Équipement : priorité des stats et liste BiS ----------------------------------------
+
+local function refreshEquipement(classData, spec)
+    text:SetText("")
+    local S = newStack(0)
+    S.header(GOLD .. T("Priorité des statistiques (%s)", D(spec.nom)) .. "|r", "stuff:" .. classData.token .. ":stats", 0)
+    if not spec.stats or #spec.stats == 0 then S.line(GREY .. T("  Pas encore disponible.") .. "|r", 0, 19) end
+    for i, s in ipairs(spec.stats or {}) do S.line(i .. ". " .. linkify(ns.Texte(s), classData), 0, 19) end
+
+    S.header(GOLD .. T("Meilleur équipement (BiS)") .. "|r", "stuff:" .. classData.token .. ":bis", 12)
+    if not spec.objets or #spec.objets == 0 then
+        S.line(GREY .. T("Wowhead n'a pas encore rempli sa liste BiS pour WoW Forever. " ..
+            "Elle apparaîtra ici automatiquement dès qu'elle sera publiée.") .. "|r", 0, 19)
+    end
+    local currentSlot
+    for _, o in ipairs(spec.objets or {}) do
+        if o.emplacement ~= currentSlot then
+            currentSlot = o.emplacement
+            S.gap(8)
+        end
+        local status = itemIsEquipped(o.id) and (GREEN .. T("porté") .. "|r") or (ORANGE .. T("à chercher") .. "|r")
+        local source = (o.source and o.source ~= "") and (GREY .. "  –  " .. ns.Texte(o.source) .. "|r") or ""
+        S.iconRow(itemIcon(o), WHITE .. (D(o.emplacement) or "") .. "|r  " .. GREY .. (D(o.rang) or "") .. "|r  " ..
+            "|cffa335ee" .. ns.ItemName(o.id, o.nom) .. "|r  [" .. status .. "]" .. source, { item = o.id }, 0, 30)
+    end
+    content:SetHeight(-S.y + 10)
+end
+
 local function refreshScrollView(classData, spec)
-    for _, r in ipairs(itemRows) do r:Hide() end
-    for _, r in ipairs(zoneRows) do r:Hide() end
+    hideRows()
     if currentTab == "conseils" and conseilsMode() == "zones" then
         refreshZones()
-        return
-    end
-    if currentTab == "conseils" and conseilsMode() == "rotation" then
+    elseif currentTab == "conseils" and conseilsMode() == "rotation" then
         refreshRotation(classData, spec)
-        return
-    end
-    if currentTab == "stuff" and subMode("stuff") == "enchants" then
+    elseif currentTab == "stuff" and subMode("stuff") == "enchants" then
         refreshEnchants(classData, spec)
-        return
-    end
-    local lines = {}
-    if currentTab == "stuff" then
-        table.insert(lines, GOLD .. T("Priorité des statistiques (%s)", D(spec.nom)) .. "|r")
-        if not spec.stats or #spec.stats == 0 then table.insert(lines, GREY .. T("  Pas encore disponible.") .. "|r") end
-        for i, s in ipairs(spec.stats or {}) do table.insert(lines, "  " .. i .. ". " .. ns.Texte(s)) end
-        table.insert(lines, " ")
-        table.insert(lines, GOLD .. T("Meilleur équipement (BiS)") .. "|r")
-        if not spec.objets or #spec.objets == 0 then
-            table.insert(lines, GREY .. "  " .. T("Wowhead n'a pas encore rempli sa liste BiS pour WoW Forever. " ..
-                "Elle apparaîtra ici automatiquement dès qu'elle sera publiée.") .. "|r")
-        end
+    elseif currentTab == "stuff" then
+        refreshEquipement(classData, spec)
     else
-        local liste = (ns.conseils and ns.conseils[classData.token]) or {}
-        if ns.GetLang() == "en" and ns.conseilsEN and ns.conseilsEN[classData.token] then
-            liste = ns.conseilsEN[classData.token]
-        end
-        if #liste == 0 then
-            table.insert(lines, GREY .. T("Pas encore de conseils écrits pour cette classe. " ..
-                "Le lien en bas de la fenêtre ouvre le guide Wowhead de ta spécialisation.") .. "|r")
-        end
-        local level = UnitLevel("player") or 1
-        for i, c in ipairs(liste) do
-            local titre = c:match("^##%s*(.+)$")
-            if titre then
-                -- Titre de catégorie : ligne vide avant (sauf en haut), en doré.
-                if i > 1 then table.insert(lines, " ") end
-                local a, b = titre:match("(%d+) à (%d+)")
-                if not a then a, b = titre:match("(%d+) to (%d+)") end
-                a, b = tonumber(a), tonumber(b)
-                local shown = (a and b) and T("Niveaux %d à %d", a, b) or D(titre)
-                if a and b and level >= a and (level < b or (b == 60 and level == 60)) then
-                    table.insert(lines, GREEN .. "> " .. shown .. "  " .. T("(ton niveau)") .. "|r")
-                else
-                    table.insert(lines, GOLD .. shown .. "|r")
-                end
-            else
-                table.insert(lines, "   • " .. c)
-            end
-        end
-        table.insert(lines, " ")
-        table.insert(lines, GREY .. T("Talents, stats et BiS : %s, mis à jour le %s.",
-            D(classData.source or "?"), classData.majLe or "?") .. "|r")
-        table.insert(lines, GREY .. "AideClasse v" .. ns.version .. "|r")
+        refreshClasse(classData)
     end
-    text:SetText(table.concat(lines, "\n"))
-    local y = -(text:GetStringHeight() + 10)
-
-    if currentTab == "stuff" then
-        local currentSlot
-        for i, o in ipairs(spec.objets or {}) do
-            if o.emplacement ~= currentSlot then
-                currentSlot = o.emplacement
-                y = y - 8
-            end
-            local row = getItemRow(i)
-            row:ClearAllPoints()
-            row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, y)
-            row.itemID = o.id
-            row.spellID, row.tipTitle, row.tipNote = nil, nil, nil
-            row:SetHeight(30)
-            row.icon:SetTexture(itemIcon(o))
-            local status = itemIsEquipped(o.id) and (GREEN .. T("porté") .. "|r") or (ORANGE .. T("à chercher") .. "|r")
-            local source = (o.source and o.source ~= "") and (GREY .. "  –  " .. ns.Texte(o.source) .. "|r") or ""
-            row.text:SetText(WHITE .. (D(o.emplacement) or "") .. "|r  " .. GREY .. (D(o.rang) or "") .. "|r  " ..
-                "|cffa335ee" .. ns.ItemName(o.id, o.nom) .. "|r  [" .. status .. "]" .. source)
-            row:Show()
-            y = y - 32
-        end
-    end
-    content:SetHeight(-y + 10)
 end
 
 -- Fenêtre -------------------------------------------------------------------------
@@ -1062,7 +1215,10 @@ function ns.Layout()
     content:SetWidth(contentW + 10)
     text:SetWidth(contentW)
     for _, r in ipairs(itemRows) do r:SetWidth(contentW) end
-    for _, r in ipairs(zoneRows) do r:SetWidth(contentW); r.text:SetWidth(contentW - 90) end
+    for _, r in ipairs(zoneRows) do
+        r:SetWidth(contentW - (r.indent or 0)); r.text:SetWidth(contentW - (r.pad or 90))
+    end
+    for _, r in ipairs(headerRows) do r:SetWidth(contentW - (r.indent or 0)) end
 end
 
 function ns.ResetSize()
@@ -1137,6 +1293,7 @@ function ns.Refresh()
     if not classData then
         talentsView:Hide(); scrollView:Show()
         for _, b in ipairs(specButtons) do b:Hide() end
+        hideRows()
         text:SetText(T("%s : pas encore de données pour cette classe.\n\nLes données arrivent avec la mise à jour automatique depuis Wowhead.",
             GOLD .. (UnitClass("player") or "?") .. "|r"))
         return

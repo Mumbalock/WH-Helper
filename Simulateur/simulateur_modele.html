@@ -171,7 +171,13 @@ body {
 .objet { display: flex; align-items: center; gap: 10px; padding: 3px 4px; cursor: help; }
 .objet:hover { background: linear-gradient(90deg, rgba(255,209,0,.18), transparent); }
 .objet img { width: 26px; height: 26px; border: 1px solid #444; flex: none; }
-.lien { display: flex; align-items: center; gap: 8px; padding: 8px 12px 10px; font-size: .78rem; color: var(--or); flex: none; }
+.lien { display: flex; align-items: center; gap: 8px; padding: 8px 30px 10px 12px; font-size: .78rem; color: var(--or); flex: none; }
+/* Poignée de redimensionnement en bas à droite (comme la poignée de l'addon). Clic droit : taille par défaut. */
+.poignee { position: absolute; right: 3px; bottom: 3px; width: 16px; height: 16px; padding: 0; border: 0; cursor: nwse-resize; touch-action: none; z-index: 2;
+  background: linear-gradient(135deg, transparent 0 45%, #a08a5a 45% 52%, transparent 52% 64%, #a08a5a 64% 71%, transparent 71% 83%, #a08a5a 83% 90%, transparent 90%); }
+.poignee:hover, .poignee.active { filter: brightness(1.6); }
+.poignee:focus-visible { outline: 2px solid var(--or); outline-offset: 1px; }
+#arbres { transform-origin: 0 0; }
 .lien input { flex: 1; min-width: 0; background: #000; color: #fff; border: 1px solid #555; font-family: var(--f-mono); font-size: .72rem; padding: 3px 6px; }
 .titre-conseils { margin-top: 14px; margin-bottom: 2px; } .titre-conseils.premier { margin-top: 0; }
 .conseil { padding-left: 18px; text-indent: -10px; margin: 2px 0; }
@@ -263,6 +269,7 @@ body {
       </div>
 
       <div class="lien"><span id="libLien">Lien Wowhead :</span><input id="lien" readonly aria-label="Lien Wowhead à copier"></div>
+      <button class="poignee" id="poignee" type="button"></button>
     </div>
 
     <div class="chat">
@@ -311,7 +318,7 @@ body {
         <li>Passe la souris sur un talent, un sort ou un objet pour voir son infobulle Wowhead (en français) et à quel niveau le prendre.</li>
         <li>La barre sous les arbres fait défiler les niveaux de 10 à 60 ; la case qui brille reçoit le point de ce niveau.</li>
         <li>Dans le jeu, les noms de talents et d'objets s'afficheront en français.</li>
-        <li>Fais glisser l'icône autour de la minimap, et la fenêtre par sa barre de titre.</li>
+        <li>Fais glisser l'icône autour de la minimap, et la fenêtre par sa barre de titre. Le coin en bas à droite de la fenêtre change sa taille (clic droit : taille par défaut).</li>
         <li>Données Wowhead du <span id="dateMaj"></span>.</li>
       </ul>
     </div>
@@ -346,7 +353,10 @@ body {
   }
   const ZT = (s) => (s && anglais() && (ANG.zones || {})[s]) || s;           // textes de Zones.lua
   const conseilsAffiches = () => (anglais() && (ANG.conseils || {})[classe.token]) || conseilsFR;
-  const notePasTraduit = () => (anglais() ? `<div class="c-gris">${esc(T("Les textes de cette section ne sont pas encore traduits."))}</div>` : "");
+  const TX = (s) => (s && anglais() && (ANG.textes || {})[s]) || s;          // textes d'Enchants.lua / Rotation.lua
+  // Nom d'un sort ou objet : en anglais notre traduction, sinon le nom du jeu (Wowhead, en français).
+  const nomJeu = (o) => (anglais() && (ANG.textes || {})[o.n]) || o.jeu || o.n;
+  const exTexte = (o, champ) => (anglais() && o[champ + "EN"]) || o[champ];  // objets BiS d'exemple (nomEN, sourceEN)
 
   function chargerClasse(token) {
     classe = CLASSES[token] || CLASSES.WARLOCK || Object.values(CLASSES)[0];
@@ -357,10 +367,14 @@ body {
   }
   const ONGLETS = [["talents", "Talents"], ["stuff", "Stuff"], ["conseils", "Conseils"]];
   const EXEMPLE_BIS = [
-    { id: 1, emplacement: "Tête", rang: "BiS", nom: "Capuche d'exemple de l'ombre", icone: "inv_helmet_06", source: "Boss d'exemple – donjon niveau 60", porte: false },
-    { id: 2, emplacement: "Tête", rang: "Très bon", nom: "Couronne d'exemple", icone: "inv_helmet_06", source: "Artisanat – Couture", porte: true },
-    { id: 3, emplacement: "Torse", rang: "BiS", nom: "Robe d'exemple du crépuscule", icone: "inv_chest_cloth_21", source: "Raid d'exemple – boss final", porte: false },
-    { id: 4, emplacement: "Baguette", rang: "BiS", nom: "Baguette d'exemple", icone: "inv_wand_01", source: "Quête d'exemple", porte: false },
+    { id: 1, emplacement: "Tête", rang: "BiS", nom: "Capuche d'exemple de l'ombre", nomEN: "Example Shadow Hood", icone: "inv_helmet_06",
+      source: "Boss d'exemple – donjon niveau 60", sourceEN: "Example boss – level 60 dungeon", porte: false },
+    { id: 2, emplacement: "Tête", rang: "Très bon", nom: "Couronne d'exemple", nomEN: "Example Crown", icone: "inv_helmet_06",
+      source: "Artisanat – Couture", sourceEN: "Crafted – Tailoring", porte: true },
+    { id: 3, emplacement: "Torse", rang: "BiS", nom: "Robe d'exemple du crépuscule", nomEN: "Example Twilight Robe", icone: "inv_chest_cloth_21",
+      source: "Raid d'exemple – boss final", sourceEN: "Example raid – final boss", porte: false },
+    { id: 4, emplacement: "Baguette", rang: "BiS", nom: "Baguette d'exemple", nomEN: "Example Wand", icone: "inv_wand_01",
+      source: "Quête d'exemple", sourceEN: "Example quest", porte: false },
   ];
   const ICONE_VIDE = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#222"/><text x="5" y="7.5" font-size="7" text-anchor="middle" fill="#888">?</text></svg>');
   const img = (nom) => ICONES[nom] || ICONE_VIDE;
@@ -508,7 +522,7 @@ body {
   // --- Rotation et Enchants & compos (copie de refreshRotation / refreshEnchants, UI.lua) ---
   const dansTranche = (n, a, b, strict) => (a === b ? n === a : n >= a && (n < b || (!strict && b === 60 && n === 60)));
   const titreTranche = (a, b) => (a === b ? T("Niveau %d", a) : T("Niveaux %d à %d", a, b));
-  const noteGris = (t) => (t ? `<span class="c-gris">&nbsp; – &nbsp;${esc(t)}</span>` : "");
+  const noteGris = (t) => (t ? `<span class="c-gris">&nbsp; – &nbsp;${esc(TX(t))}</span>` : "");
   const attrWh = (type, id, nom) => (id ? ` data-wh="${type}:${id}" data-nom="${esc(nom)}"` : "");
   const titreSection = (t, actuel, cls = "titre-conseils") => actuel
     ? `<div class="${cls} c-vert">&gt; ${esc(t)}&nbsp; ${esc(T("(ton niveau)"))}</div>` : `<div class="${cls} c-or">${esc(t)}</div>`;
@@ -516,19 +530,19 @@ body {
   function rendreRotation() {
     const sp = spec(), rot = ROTATIONS[classe.token] || {}, n = etat.niveau;
     const tranches = [...(rot.debut || []), ...(rot[etat.spec] || [])];
-    let h = `<div class="c-or">${esc(T("Rotation – %s", Dn(sp.nom)))}</div><div class="c-gris">${esc(T("Du haut vers le bas : lance le premier sort disponible. Survole une icône pour le détail."))}</div>` + notePasTraduit();
+    let h = `<div class="c-or">${esc(T("Rotation – %s", Dn(sp.nom)))}</div><div class="c-gris">${esc(T("Du haut vers le bas : lance le premier sort disponible. Survole une icône pour le détail."))}</div>`;
     const actuelle = tranches.find((t) => dansTranche(n, t.min, t.max));
     if (actuelle) {
       h += `<div style="margin-top:8px"><span class="c-vert">${esc(T("Ton niveau (%d) : ", n))}</span><span class="chaine">`
-        + actuelle.etapes.map((e) => `<img src="${img(e.ic)}" alt="${esc(e.jeu || e.n)}" title="${esc(e.jeu || e.n)}">`).join("<i>&gt;</i>") + "</span></div>";
+        + actuelle.etapes.map((e) => `<img src="${img(e.ic)}" alt="${esc(nomJeu(e))}" title="${esc(nomJeu(e))}">`).join("<i>&gt;</i>") + "</span></div>";
     }
     if (!tranches.length) h += `<div class="c-gris">${esc(T("Pas encore de rotation écrite pour cette spécialisation."))}</div>`;
     for (const t of tranches) {
       h += titreSection(titreTranche(t.min, t.max), dansTranche(n, t.min, t.max));
       t.etapes.forEach((e, i) => {
-        h += `<div class="objet retrait"${attrWh("spell", e.s, e.jeu || e.n)}><img src="${img(e.ic)}" alt=""><span><span class="c-blanc">${i + 1}.</span>&nbsp; <span class="c-sort">${esc(e.jeu || e.n)}</span>${noteGris(e.t)}</span></div>`;
+        h += `<div class="objet retrait"${attrWh("spell", e.s, nomJeu(e))}><img src="${img(e.ic)}" alt=""><span><span class="c-blanc">${i + 1}.</span>&nbsp; <span class="c-sort">${esc(nomJeu(e))}</span>${noteGris(e.t)}</span></div>`;
       });
-      for (const note of t.notes || []) h += `<div class="note-rot"><span class="c-orange">•</span> ${esc(note)}</div>`;
+      for (const note of t.notes || []) h += `<div class="note-rot"><span class="c-orange">•</span> ${esc(TX(note))}</div>`;
     }
     $("defile").innerHTML = h;
   }
@@ -538,8 +552,8 @@ body {
     const cle = ((ENCHANTS.specs || {})[classe.token] || {})[etat.spec], P = cle && (ENCHANTS.profils || {})[cle];
     let h = `<div class="c-or">${esc(T("Enchantements et consommables (%s)", Dn(sp.nom)))}</div>`;
     if (!P) { $("defile").innerHTML = h + `<div class="c-gris">${esc(T("Pas encore de liste pour cette spécialisation."))}</div>`; return; }
-    h += `<div class="c-gris">${esc(T("Profil : %s. Bases de WoW Classic : WoW Forever ajoute des recettes, vérifie sur Wowhead.", P.nom))}</div>` + notePasTraduit();
-    const enchants = (liste) => liste.map((e) => `<div class="objet retrait"${attrWh("spell", e.s, e.jeu || e.n)}><img src="${img(e.ic || "trade_engraving")}" alt=""><span><span class="c-blanc">${esc(e.e)}</span>&nbsp; <span class="c-vert">${esc(e.n)}</span>${noteGris(e.t)}</span></div>`).join("");
+    h += `<div class="c-gris">${esc(T("Profil : %s. Bases de WoW Classic : WoW Forever ajoute des recettes, vérifie sur Wowhead.", TX(P.nom)))}</div>`;
+    const enchants = (liste) => liste.map((e) => `<div class="objet retrait"${attrWh("spell", e.s, nomJeu(e))}><img src="${img(e.ic || "trade_engraving")}" alt=""><span><span class="c-blanc">${esc(TX(e.e))}</span>&nbsp; <span class="c-vert">${esc(TX(e.n))}</span>${noteGris(e.t)}</span></div>`).join("");
     h += titreSection(T("Enchantements pendant la montée"), n < 60) + enchants(P.montee || []);
     h += titreSection(T("Enchantements au niveau 60"), n >= 60) + enchants(P.max || []);
     h += `<div class="titre-conseils c-or" style="margin-top:18px">${esc(T("Consommables par tranche de niveau"))}</div>`;
@@ -547,7 +561,7 @@ body {
     for (const t of P.compos || []) {
       const actuel = dansTranche(n, t.min, t.max, strict);
       h += `<div style="margin-top:6px">&nbsp;&nbsp;${actuel ? `<span class="c-vert">&gt; ${titreTranche(t.min, t.max)}&nbsp; ${esc(T("(ton niveau)"))}</span>` : `<span class="c-blanc">${titreTranche(t.min, t.max)}</span>`}</div>`;
-      h += t.objets.map((c) => `<div class="objet retrait"${attrWh("item", c.i, c.jeu || c.n)}><img src="${img(c.ic)}" alt=""><span><span class="c-blanc">${esc(c.jeu || c.n)}</span>${noteGris(c.t)}</span></div>`).join("");
+      h += t.objets.map((c) => `<div class="objet retrait"${attrWh("item", c.i, nomJeu(c))}><img src="${img(c.ic)}" alt=""><span><span class="c-blanc">${esc(nomJeu(c))}</span>${noteGris(c.t)}</span></div>`).join("");
     }
     $("defile").innerHTML = h;
   }
@@ -569,8 +583,8 @@ body {
       for (const o of objets) {
         if (o.emplacement !== empl) { empl = o.emplacement; h += '<div style="height:8px"></div>'; }
         const statut = o.porte ? `<span class="c-vert">${esc(T("porté"))}</span>` : `<span class="c-orange">${esc(T("à chercher"))}</span>`;
-        const src = o.source ? `<span class="c-gris">&nbsp; – &nbsp;${texte(o.source)}</span>` : "";
-        h += `<div class="objet" data-objet="${o.id}"><img src="${img(o.icone)}" alt=""><span><span class="c-blanc">${esc(Dn(o.emplacement))}</span>&nbsp; <span class="c-gris">${esc(Dn(o.rang))}</span>&nbsp; <span class="c-epique">${esc(o.nom)}</span> [${statut}]${src}</span></div>`;
+        const src = o.source ? `<span class="c-gris">&nbsp; – &nbsp;${texte(exTexte(o, "source"))}</span>` : "";
+        h += `<div class="objet" data-objet="${o.id}"><img src="${img(o.icone)}" alt=""><span><span class="c-blanc">${esc(Dn(o.emplacement))}</span>&nbsp; <span class="c-gris">${esc(Dn(o.rang))}</span>&nbsp; <span class="c-epique">${esc(exTexte(o, "nom"))}</span> [${statut}]${src}</span></div>`;
       }
     } else {
       const conseils = conseilsAffiches();
@@ -595,6 +609,7 @@ body {
     $("titre").textContent = "AideClasse – " + Dn(classe.nom);
     $("langue").textContent = anglais() ? "EN" : "FR";
     $("langue").setAttribute("aria-label", T("Changer de langue"));
+    $("poignee").setAttribute("aria-label", T("Redimensionner"));
     $("fenetre").lang = anglais() ? "en" : "fr";   // seule la fenêtre de l'addon change de langue
     $("libBuild").textContent = T("Build :"); $("libLien").textContent = T("Lien Wowhead :");
     $("onglets").innerHTML = "";
@@ -630,7 +645,7 @@ body {
     $("depenses").value = etat.depenses; $("vDepenses").textContent = `${etat.depenses} / ${gagnes()}`;
     $("exempleBis").checked = etat.exemple;
     $("boutonMini").hidden = etat.cacheMini;
-    placerBouton(); sauver();
+    placerBouton(); ajusterTalents(); sauver();
   }
 
   function montrer(onglet) {
@@ -669,6 +684,7 @@ body {
     if (msg === "minimap") { etat.cacheMini = !etat.cacheMini; chat(prefixe + esc(T(etat.cacheMini ? "icône minimap cachée." : "icône minimap affichée."))); rafraichir(); }
     else if (msg === "fr" || msg === "en") changerLangue(msg);
     else if (msg === "langue" || msg === "lang" || msg === "language") changerLangue(anglais() ? "fr" : "en");
+    else if (msg === "taille" || msg === "reset") { tailleParDefaut(); chat(prefixe + esc(T("taille de la fenêtre remise par défaut."))); }
     else if (["talents", "stuff", "conseils"].includes(msg)) montrer(msg);
     else if (msg === "zones" || msg === "zone") { etat.modeConseils = "zones"; montrer("conseils"); }
     else if (msg === "rotation" || msg === "rota") { etat.modeConseils = "rotation"; montrer("conseils"); }
@@ -680,7 +696,8 @@ body {
         "/aideclasse zones : zones de montée en niveau",
         "/aideclasse rotation : rotation de ta spé — /aideclasse enchants : enchantements et compos",
         "/aideclasse spe : spécialisation suivante — /aideclasse build : build suivant",
-        "/aideclasse minimap : cacher/afficher l'icône", "/aideclasse fr | en : langue de l'interface"]) chat(prefixe + esc(T(l)));
+        "/aideclasse minimap : cacher/afficher l'icône", "/aideclasse fr | en : langue de l'interface",
+        "/aideclasse taille : remettre la fenêtre à sa taille par défaut"]) chat(prefixe + esc(T(l)));
     } else basculer();
   }
   // Bouton FR / EN de la fenêtre (comme ns.SetLang : change la langue et redessine).
@@ -693,7 +710,7 @@ body {
     `<b>${esc(T("Changer de langue"))}</b>${esc(T("Interface en français. Clic : passer en anglais."))}`, true));
   $("langue").addEventListener("mouseleave", cacherBulle);
   $("formChat").addEventListener("submit", (e) => { e.preventDefault(); commande($("saisie").value); $("saisie").value = ""; });
-  for (const c of ["/aideclasse", "/aideclasse stuff", "/aideclasse enchants", "/aideclasse conseils", "/aideclasse rotation", "/aideclasse zones", "/aideclasse minimap", "/aideclasse langue", "/aideclasse aide"]) {
+  for (const c of ["/aideclasse", "/aideclasse stuff", "/aideclasse enchants", "/aideclasse conseils", "/aideclasse rotation", "/aideclasse zones", "/aideclasse minimap", "/aideclasse langue", "/aideclasse taille", "/aideclasse aide"]) {
     const b = document.createElement("button"); b.type = "button"; b.innerHTML = `<code>${c}</code>`;
     b.addEventListener("click", () => commande(c)); $("raccourcis").appendChild(b);
   }
@@ -800,8 +817,8 @@ body {
     const exemple = !(spec().objets && spec().objets.length);
     const it = (exemple ? EXEMPLE_BIS : spec().objets).find((x) => String(x.id) === o.dataset.objet); if (!it) return;
     const addon = `<span class="c-demo">${esc(T("AideClasse : %s %s (%s)", Dn(it.rang), Dn(spec().nom), Dn(it.emplacement)))}</span>`;
-    const secours = `<b class="c-epique">${esc(it.nom)}</b><span class="c-blanc">${esc(Dn(it.emplacement))}</span>`;
-    if (exemple) bulle(o.querySelector("img"), `<div class="wh-corps">${secours}<br><span class="c-gris">(objet d'exemple)</span><div class="wh-addon">${addon}</div></div>`, false, true);
+    const secours = `<b class="c-epique">${esc(exTexte(it, "nom"))}</b><span class="c-blanc">${esc(Dn(it.emplacement))}</span>`;
+    if (exemple) bulle(o.querySelector("img"), `<div class="wh-corps">${secours}<br><span class="c-gris">${anglais() ? "(example item)" : "(objet d'exemple)"}</span><div class="wh-addon">${addon}</div></div>`, false, true);
     else bulleWh(o.querySelector("img"), "item", it.id, secours, addon);
   });
   $("defile").addEventListener("mouseout", (e) => { if (e.target.closest("[data-objet], [data-point]")) cacherBulle(); });
@@ -852,6 +869,72 @@ body {
     f.style.top = Math.min(Math.max(0, e.clientY - s.top - tire.dy), s.height - 40) + "px";
   });
   $("barre").addEventListener("pointerup", () => { tire = null; });
+
+  // --- Fenêtre redimensionnable (copie de la poignée de UI.lua) ---
+  // Mêmes bornes que l'addon ; la fenêtre ne sort pas de la scène.
+  const MIN_W = 580, MIN_H = 440, MAX_W = 1600, MAX_H = 1200, ARBRES_W = 3 * 216 + 2 * 8, ARBRES_H = 360;
+  // Fixe la position en pixels (comme quand on déplace la fenêtre) pour que le coin haut-gauche ne bouge pas.
+  function figerPosition() {
+    const f = $("fenetre"), s = $("scene").getBoundingClientRect(), r = f.getBoundingClientRect();
+    f.style.transform = "none"; f.style.left = (r.left - s.left) + "px"; f.style.top = (r.top - s.top) + "px";
+  }
+  function appliquerTaille() {
+    const f = $("fenetre"), t = etat.taille;
+    if (!t) { f.style.width = ""; f.style.height = ""; ajusterTalents(); return; }
+    const sc = $("scene");
+    f.style.width = Math.max(Math.min(MIN_W, sc.clientWidth - 16), Math.min(t[0], MAX_W, sc.clientWidth - 16)) + "px";
+    f.style.height = Math.max(MIN_H, Math.min(t[1], MAX_H)) + "px";
+    ajusterTalents();
+  }
+  // Onglet Talents : comme dans l'addon, les arbres gardent leur disposition et changent d'échelle.
+  function ajusterTalents() {
+    const vue = $("vueTalents"), arbres = $("arbres"), cadre = arbres.parentElement;
+    if (vue.hidden || $("fenetre").hidden) return;
+    let autres = 0;
+    for (const el of vue.children) if (el !== cadre) autres += el.offsetHeight;
+    const libre = vue.clientHeight - autres - 8 * (vue.children.length - 1);
+    let s = Math.max(0.5, Math.min(2, cadre.clientWidth / ARBRES_W, libre / ARBRES_H));
+    if (Math.abs(s - 1) < 0.03) s = 1;   // taille par défaut : arbres à l'échelle 1, nets
+    arbres.style.transform = s === 1 ? "" : `scale(${s})`;
+    cadre.style.height = Math.round(ARBRES_H * s) + "px";
+    cadre.style.overflowX = s > 0.5 ? "hidden" : "auto";
+  }
+  function tailleParDefaut() { delete etat.taille; appliquerTaille(); sauver(); }
+  let etire = null;
+  $("poignee").addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault(); figerPosition(); fermerMenu(); cacherBulle();
+    const f = $("fenetre");
+    etire = { x: e.clientX, y: e.clientY, w: f.offsetWidth, h: f.offsetHeight };
+    $("poignee").classList.add("active"); $("poignee").setPointerCapture(e.pointerId);
+  });
+  $("poignee").addEventListener("pointermove", (e) => {
+    if (!etire) return;
+    const f = $("fenetre"), sc = $("scene");
+    const maxW = Math.min(MAX_W, sc.clientWidth - f.offsetLeft), maxH = Math.min(MAX_H, sc.clientHeight - f.offsetTop);
+    f.style.width = Math.max(Math.min(MIN_W, maxW), Math.min(maxW, etire.w + e.clientX - etire.x)) + "px";
+    f.style.height = Math.max(MIN_H, Math.min(maxH, etire.h + e.clientY - etire.y)) + "px";
+    ajusterTalents();
+  });
+  $("poignee").addEventListener("pointerup", () => {
+    if (!etire) return;
+    etire = null; $("poignee").classList.remove("active");
+    const f = $("fenetre"); etat.taille = [f.offsetWidth, f.offsetHeight]; sauver();
+  });
+  $("poignee").addEventListener("contextmenu", (e) => { e.preventDefault(); tailleParDefaut(); });
+  $("poignee").addEventListener("keydown", (e) => {   // clavier : flèches pour agrandir / réduire, Suppr pour la taille par défaut
+    const pas = { ArrowRight: [20, 0], ArrowLeft: [-20, 0], ArrowDown: [0, 20], ArrowUp: [0, -20] }[e.key];
+    if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); tailleParDefaut(); return; }
+    if (!pas) return;
+    e.preventDefault(); figerPosition();
+    const f = $("fenetre"); etat.taille = [f.offsetWidth + pas[0], f.offsetHeight + pas[1]]; appliquerTaille();
+    etat.taille = [f.offsetWidth, f.offsetHeight]; sauver();
+  });
+  $("poignee").addEventListener("mouseenter", () => bulle($("poignee"),
+    `<b>${esc(T("Redimensionner"))}</b>${esc(T("Glisser : changer la taille de la fenêtre."))}<br>${esc(T("Clic droit : taille par défaut."))}`, true));
+  $("poignee").addEventListener("mouseleave", cacherBulle);
+  if (window.ResizeObserver) new ResizeObserver(() => ajusterTalents()).observe($("vueTalents"));
+  window.addEventListener("resize", () => { if (etat.taille) appliquerTaille(); });
   $("fermer").addEventListener("click", () => { $("fenetre").hidden = true; fermerMenu(); cacherBulle(); });
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
@@ -885,6 +968,7 @@ body {
   $("dateMaj").textContent = classe.majLe;
   chat(prefixe + esc(T("chargé (données Wowhead du %s). Tape /aideclasse ou clique sur l'icône de la minimap.", classe.majLe)));
   etat.vue = Math.max(10, Math.min(60, etat.niveau));
+  appliquerTaille();
   montrer();
 })();
 </script>
