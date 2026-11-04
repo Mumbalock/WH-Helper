@@ -644,6 +644,17 @@ def lire_zones():
     return lire_table_lua(source[debut:]) if debut >= 0 else []
 
 
+def lire_sorts():
+    """Sorts cités dans les conseils (Data/Sorts.lua) -> {TOKEN: [[id, nom FR, nom EN], ...]}."""
+    chemin = os.path.join(ADDON_SRC, "Data", "Sorts.lua")
+    if not os.path.isfile(chemin):
+        return {}
+    with open(chemin, encoding="utf-8") as f:
+        source = f.read()
+    debut = source.find("{", source.find("ns.sortsConseils"))
+    return lire_table_lua(source[debut:]) if debut >= 0 else {}
+
+
 def evaluer_lua(source, fonctions):
     """Lit un fichier de données Lua écrit à la main : affectations `local X = ...` / `ns.a.b = ...`,
     tables (y compris clés [n] et tables mixtes), appels de fonctions simples (S, E, C...) et variables locales.
@@ -885,7 +896,7 @@ def generer_simulateur(toutes):
     rotations, enchants = lire_rotations(), lire_enchants()
     autres_icones = completer_rotations_enchants(rotations, enchants)
     js = json.dumps({"classes": toutes, "conseils": conseils, "zones": lire_zones(),
-                     "rotations": rotations, "enchants": enchants, "anglais": lire_langue(),
+                     "rotations": rotations, "enchants": enchants, "anglais": lire_langue(), "sorts": lire_sorts(),
                      "icones": icones_simulateur(toutes, autres_icones)},
                     ensure_ascii=False).replace("</", "<\\/")
     with open(modele, encoding="utf-8") as f:

@@ -180,6 +180,15 @@ body {
 #arbres { transform-origin: 0 0; }
 .lien input { flex: 1; min-width: 0; background: #000; color: #fff; border: 1px solid #555; font-family: var(--f-mono); font-size: .72rem; padding: 3px 6px; }
 .titre-conseils { margin-top: 14px; margin-bottom: 2px; } .titre-conseils.premier { margin-top: 0; }
+/* Sections repliables (copie des titres cliquables de UI.lua : icône − / +). */
+.section { margin-top: 10px; } .section.premier { margin-top: 0; } .section.sous { margin-left: 12px; margin-top: 4px; }
+.tete-section { display: flex; align-items: center; gap: 6px; width: 100%; padding: 1px 4px 1px 0; background: none; border: 0; font: inherit; text-align: left; cursor: pointer; color: inherit; }
+.tete-section:hover { background: linear-gradient(90deg, rgba(255,209,0,.14), transparent); }
+.tete-section:focus-visible { outline: 1px solid #ffd100; }
+.tete-section .pm { flex: none; width: 13px; height: 13px; border: 1px solid #8a7a45; border-radius: 2px; background: linear-gradient(#3a3320, #1c180c);
+  color: #ffd100; font-size: 12px; line-height: 11px; text-align: center; font-weight: 700; }
+.tete-section .pm::before { content: "−"; } .section.replie > .tete-section .pm::before { content: "+"; }
+.section.replie > .contenu { display: none; }
 .conseil { padding-left: 18px; text-indent: -10px; margin: 2px 0; }
 .objet[data-wh]:hover { text-decoration: none; }
 .objet.retrait { padding-left: 16px; }
@@ -387,7 +396,8 @@ body {
     conseils: { cle: "modeConseils", modes: [["classe", "Classe"], ["rotation", "Rotation"], ["zones", "Zones d'xp"]] },
     stuff: { cle: "modeStuff", modes: [["equipement", "Équipement"], ["enchants", "Enchants & compos"]] },
   };
-  const ROTATIONS = D.rotations || {}, ENCHANTS = D.enchants || {};
+  const ROTATIONS = D.rotations || {}, ENCHANTS = D.enchants || {}, SORTS = D.sorts || {};
+  etat.replis = {};
   try { Object.assign(etat, JSON.parse(localStorage.getItem("aideclasse-sim3") || "{}")); } catch (e) {}
   chargerClasse(etat.classe); etat.classe = classe.token;
   if (!classe.specs[etat.spec]) etat.spec = classe.defaultSpec;
@@ -497,14 +507,15 @@ body {
       else if (n > z.max) col = "c-gris";
       else if (n < z.min - 5) col = "c-orange";
       const camp = (z.camp || T("Contestée")) + (z.nouveau ? T(", nouvelle zone Forever") : "");
-      h += `<div class="z-nom"><span class="${col}">${esc(nom)}</span>&nbsp; <span class="c-or">${esc(T("niv. %d–%d", z.min, z.max))}</span>&nbsp; <span class="c-gris">(${esc(camp)})</span>${tag}</div>`;
+      const titre = `<span class="${col}">${esc(nom)}</span>&nbsp; <span class="c-or">${esc(T("niv. %d–%d", z.min, z.max))}</span>&nbsp; <span class="c-gris">(${esc(camp)})</span>${tag}`;
+      let c = "";
       const a = z.acces || {};
       const acces = ZT(a[f] || a.tous) || (a.Alliance && a.Horde ? T("Alliance : %s Horde : %s", ZT(a.Alliance), ZT(a.Horde)) : ZT(a.Alliance || a.Horde));
-      if (acces) h += `<div class="z-ligne">${esc(T("Accès : "))}${esc(acces)}</div>`;
+      if (acces) c += `<div class="z-ligne">${esc(T("Accès : "))}${esc(acces)}</div>`;
       let vus = 0;
-      const ajouter = (titre, p) => {
+      const ajouter = (titreHub, p) => {
         points.push(p);
-        h += `<div class="z-hub"><span>• ${esc(titre)}<span class="c-gris">&nbsp; ${p.x}, ${p.y}</span></span><button class="bjeu" data-point="${points.length - 1}">${esc(T("Point"))}</button></div>`;
+        c += `<div class="z-hub"><span>• ${esc(titreHub)}<span class="c-gris">&nbsp; ${p.x}, ${p.y}</span></span><button class="bjeu" data-point="${points.length - 1}">${esc(T("Point"))}</button></div>`;
       };
       for (const hub of z.hubs || []) {
         if (hub.f && hub.f !== f) continue;
@@ -512,8 +523,9 @@ body {
         ajouter(hubNom, { map: hub.map || z.map, x: hub.x, y: hub.y, title: hubNom }); vus++;
       }
       if (!z.hubs && z.map) ajouter(T("Centre de la zone"), { map: z.map, x: 50, y: 50, title: nom });
-      else if (z.nouveau) h += `<div class="z-ligne c-gris">${esc(T("Coordonnées pas encore connues pour cette nouvelle zone."))}</div>`;
-      else if (!vus) h += `<div class="z-ligne c-gris">${esc(T("Pas de camp de ta faction dans cette zone."))}</div>`;
+      else if (z.nouveau) c += `<div class="z-ligne c-gris">${esc(T("Coordonnées pas encore connues pour cette nouvelle zone."))}</div>`;
+      else if (!vus) c += `<div class="z-ligne c-gris">${esc(T("Pas de camp de ta faction dans cette zone."))}</div>`;
+      h += section("zone:" + z.nom, titre, c);
     }
     h += `<div>&nbsp;</div><div class="c-gris">${esc(T("Niveau 60 : Mont Hyjal (nouvelle zone de fin de jeu). Source : %s", ZONES_URL))}</div>`;
     $("defile").innerHTML = h;
@@ -524,8 +536,48 @@ body {
   const titreTranche = (a, b) => (a === b ? T("Niveau %d", a) : T("Niveaux %d à %d", a, b));
   const noteGris = (t) => (t ? `<span class="c-gris">&nbsp; – &nbsp;${esc(TX(t))}</span>` : "");
   const attrWh = (type, id, nom) => (id ? ` data-wh="${type}:${id}" data-nom="${esc(nom)}"` : "");
-  const titreSection = (t, actuel, cls = "titre-conseils") => actuel
-    ? `<div class="${cls} c-vert">&gt; ${esc(t)}&nbsp; ${esc(T("(ton niveau)"))}</div>` : `<div class="${cls} c-or">${esc(t)}</div>`;
+  // Titre de section : doré, ou vert avec « (ton niveau) » (copie de sectionTitle, UI.lua).
+  const titreSection = (t, actuel) => actuel
+    ? `<span class="c-vert">${esc(t)}&nbsp; ${esc(T("(ton niveau)"))}</span>` : `<span class="c-or">${esc(t)}</span>`;
+  // Section repliable : clic sur le titre (ou sur − / +) pour la replier ; l'état est gardé comme db.replis.
+  const section = (cle, titre, contenu, cls = "") => {
+    const r = !!etat.replis[cle];
+    return `<div class="section${r ? " replie" : ""}${cls ? " " + cls : ""}" data-section="${esc(cle)}">`
+      + `<button type="button" class="tete-section" aria-expanded="${!r}"><span class="pm" aria-hidden="true"></span>${titre}</button>`
+      + `<div class="contenu">${contenu}</div></div>`;
+  };
+
+  // Noms de sorts reconnus dans les textes (copie de spellDict / linkify, UI.lua) : Data/Sorts.lua,
+  // sorts de la rotation et talents de la classe. Les noms les plus longs sont cherchés en premier.
+  const dicoSorts = {};
+  function sortsClasse() {
+    const tk = classe.token;
+    if (dicoSorts[tk]) return dicoSorts[tk];
+    const ids = new Map();
+    const ajouter = (nom, id) => { if (id && typeof nom === "string" && nom.length >= 4 && !ids.has(nom)) ids.set(nom, id); };
+    for (const [id, fr, en] of SORTS[tk] || []) { ajouter(fr, id); ajouter(en, id); }
+    for (const tranches of Object.values(ROTATIONS[tk] || {}))
+      for (const t of tranches) for (const e of t.etapes) if (e.s) { ajouter(e.n, e.s); ajouter((ANG.textes || {})[e.n], e.s); ajouter(e.jeu, e.s); }
+    (classe.arbres || []).forEach((a) => a.talents.forEach((t) => ajouter(t.nom, t.sort)));
+    const noms = [...ids.keys()].sort((a, b) => b.length - a.length);
+    return (dicoSorts[tk] = { ids, noms });
+  }
+  const lettre = /[A-Za-zÀ-ÖØ-öø-ÿ]/;
+  function lier(s) {
+    let txt = esc(s);
+    const { ids, noms } = sortsClasse(), gardes = [];
+    for (const nom of noms) {
+      const cherche = esc(nom); let i = 0;
+      while ((i = txt.indexOf(cherche, i)) >= 0) {
+        const fin = i + cherche.length;
+        if ((i > 0 && lettre.test(txt[i - 1])) || (fin < txt.length && lettre.test(txt[fin]))) { i = fin; continue; }
+        gardes.push(`<span class="c-sort" data-wh="spell:${ids.get(nom)}">${cherche}</span>`);
+        const marque = "\u0001" + (gardes.length - 1) + "\u0002";
+        txt = txt.slice(0, i) + marque + txt.slice(fin); i += marque.length;
+      }
+    }
+    return txt.replace(/\u0001(\d+)\u0002/g, (_, n) => gardes[+n]);
+  }
 
   function rendreRotation() {
     const sp = spec(), rot = ROTATIONS[classe.token] || {}, n = etat.niveau;
@@ -538,11 +590,12 @@ body {
     }
     if (!tranches.length) h += `<div class="c-gris">${esc(T("Pas encore de rotation écrite pour cette spécialisation."))}</div>`;
     for (const t of tranches) {
-      h += titreSection(titreTranche(t.min, t.max), dansTranche(n, t.min, t.max));
+      let c = "";
       t.etapes.forEach((e, i) => {
-        h += `<div class="objet retrait"${attrWh("spell", e.s, nomJeu(e))}><img src="${img(e.ic)}" alt=""><span><span class="c-blanc">${i + 1}.</span>&nbsp; <span class="c-sort">${esc(nomJeu(e))}</span>${noteGris(e.t)}</span></div>`;
+        c += `<div class="objet retrait"${attrWh("spell", e.s, nomJeu(e))}><img src="${img(e.ic)}" alt=""><span><span class="c-blanc">${i + 1}.</span>&nbsp; <span class="c-sort">${esc(nomJeu(e))}</span>${noteGris(e.t)}</span></div>`;
       });
-      for (const note of t.notes || []) h += `<div class="note-rot"><span class="c-orange">•</span> ${esc(TX(note))}</div>`;
+      for (const note of t.notes || []) c += `<div class="note-rot"><span class="c-orange">•</span> ${lier(TX(note))}</div>`;
+      h += section(`rot:${classe.token}:${etat.spec}:${t.min}-${t.max}`, titreSection(titreTranche(t.min, t.max), dansTranche(n, t.min, t.max)), c);
     }
     $("defile").innerHTML = h;
   }
@@ -554,14 +607,14 @@ body {
     if (!P) { $("defile").innerHTML = h + `<div class="c-gris">${esc(T("Pas encore de liste pour cette spécialisation."))}</div>`; return; }
     h += `<div class="c-gris">${esc(T("Profil : %s. Bases de WoW Classic : WoW Forever ajoute des recettes, vérifie sur Wowhead.", TX(P.nom)))}</div>`;
     const enchants = (liste) => liste.map((e) => `<div class="objet retrait"${attrWh("spell", e.s, nomJeu(e))}><img src="${img(e.ic || "trade_engraving")}" alt=""><span><span class="c-blanc">${esc(TX(e.e))}</span>&nbsp; <span class="c-vert">${esc(TX(e.n))}</span>${noteGris(e.t)}</span></div>`).join("");
-    h += titreSection(T("Enchantements pendant la montée"), n < 60) + enchants(P.montee || []);
-    h += titreSection(T("Enchantements au niveau 60"), n >= 60) + enchants(P.max || []);
+    h += section(`ench:${cle}:montee`, titreSection(T("Enchantements pendant la montée"), n < 60), enchants(P.montee || []));
+    h += section(`ench:${cle}:max`, titreSection(T("Enchantements au niveau 60"), n >= 60), enchants(P.max || []));
     h += `<div class="titre-conseils c-or" style="margin-top:18px">${esc(T("Consommables par tranche de niveau"))}</div>`;
     const strict = (P.compos || []).some((t) => t.min === t.max);
     for (const t of P.compos || []) {
       const actuel = dansTranche(n, t.min, t.max, strict);
-      h += `<div style="margin-top:6px">&nbsp;&nbsp;${actuel ? `<span class="c-vert">&gt; ${titreTranche(t.min, t.max)}&nbsp; ${esc(T("(ton niveau)"))}</span>` : `<span class="c-blanc">${titreTranche(t.min, t.max)}</span>`}</div>`;
-      h += t.objets.map((c) => `<div class="objet retrait"${attrWh("item", c.i, nomJeu(c))}><img src="${img(c.ic)}" alt=""><span><span class="c-blanc">${esc(nomJeu(c))}</span>${noteGris(c.t)}</span></div>`).join("");
+      h += section(`ench:${cle}:compos:${t.min}-${t.max}`, titreSection(titreTranche(t.min, t.max), actuel),
+        t.objets.map((c) => `<div class="objet retrait"${attrWh("item", c.i, nomJeu(c))}><img src="${img(c.ic)}" alt=""><span><span class="c-blanc">${esc(nomJeu(c))}</span>${noteGris(c.t)}</span></div>`).join(""), "sous");
     }
     $("defile").innerHTML = h;
   }
@@ -573,31 +626,37 @@ body {
     if (etat.onglet === "conseils" && etat.modeConseils === "rotation") { rendreRotation(); return; }
     if (etat.onglet === "stuff" && etat.modeStuff === "enchants") { rendreEnchants(); return; }
     if (etat.onglet === "stuff") {
-      h += `<div class="c-or">${esc(T("Priorité des statistiques (%s)", Dn(sp.nom)))}</div>`;
-      if (!sp.stats || !sp.stats.length) h += `<div class="c-gris">&nbsp;&nbsp;${esc(T("  Pas encore disponible.").trim())}</div>`;
-      (sp.stats || []).forEach((s, i) => { h += `<div>&nbsp;&nbsp;${i + 1}. ${texte(s)}</div>`; });
-      h += `<div>&nbsp;</div><div class="c-or">${esc(T("Meilleur équipement (BiS)"))}</div>`;
+      let c = "";
+      if (!sp.stats || !sp.stats.length) c += `<div class="c-gris conseil">${esc(T("  Pas encore disponible.").trim())}</div>`;
+      (sp.stats || []).forEach((s, i) => { c += `<div class="conseil">${i + 1}. ${texte(s)}</div>`; });
+      h += section(`stuff:${classe.token}:stats`, `<span class="c-or">${esc(T("Priorité des statistiques (%s)", Dn(sp.nom)))}</span>`, c, "premier");
+      c = "";
       const objets = (sp.objets && sp.objets.length) ? sp.objets : (etat.exemple ? EXEMPLE_BIS : []);
-      if (!objets.length) h += `<div class="c-gris">&nbsp;&nbsp;${esc(T("Wowhead n'a pas encore rempli sa liste BiS pour WoW Forever. Elle apparaîtra ici automatiquement dès qu'elle sera publiée."))}</div>`;
+      if (!objets.length) c += `<div class="c-gris conseil">${esc(T("Wowhead n'a pas encore rempli sa liste BiS pour WoW Forever. Elle apparaîtra ici automatiquement dès qu'elle sera publiée."))}</div>`;
       let empl = null;
       for (const o of objets) {
-        if (o.emplacement !== empl) { empl = o.emplacement; h += '<div style="height:8px"></div>'; }
+        if (o.emplacement !== empl) { empl = o.emplacement; c += '<div style="height:8px"></div>'; }
         const statut = o.porte ? `<span class="c-vert">${esc(T("porté"))}</span>` : `<span class="c-orange">${esc(T("à chercher"))}</span>`;
         const src = o.source ? `<span class="c-gris">&nbsp; – &nbsp;${texte(exTexte(o, "source"))}</span>` : "";
-        h += `<div class="objet" data-objet="${o.id}"><img src="${img(o.icone)}" alt=""><span><span class="c-blanc">${esc(Dn(o.emplacement))}</span>&nbsp; <span class="c-gris">${esc(Dn(o.rang))}</span>&nbsp; <span class="c-epique">${esc(exTexte(o, "nom"))}</span> [${statut}]${src}</span></div>`;
+        c += `<div class="objet" data-objet="${o.id}"><img src="${img(o.icone)}" alt=""><span><span class="c-blanc">${esc(Dn(o.emplacement))}</span>&nbsp; <span class="c-gris">${esc(Dn(o.rang))}</span>&nbsp; <span class="c-epique">${esc(exTexte(o, "nom"))}</span> [${statut}]${src}</span></div>`;
       }
+      h += section(`stuff:${classe.token}:bis`, `<span class="c-or">${esc(T("Meilleur équipement (BiS)"))}</span>`, c);
     } else {
       const conseils = conseilsAffiches();
       if (!conseils.length) h += `<div class="c-gris">${esc(T("Pas encore de conseils écrits pour cette classe. Le lien en bas de la fenêtre ouvre le guide Wowhead de ta spécialisation."))}</div>`;
-      conseils.forEach((c, i) => {
+      // Une section par titre « ## » ; la clé suit la position (identique en français et en anglais).
+      let titreCourant = null, contenu = "", num = 0;
+      const fermer = () => { if (titreCourant === null) h += contenu; else h += section(`classe:${classe.token}:${num - 1}`, titreCourant, contenu, num === 1 ? "premier" : ""); };
+      conseils.forEach((c) => {
         const titre = c.match(/^##\s*(.+)$/);
-        if (!titre) { h += `<div class="conseil">• ${esc(c)}</div>`; return; }
+        if (!titre) { contenu += `<div class="conseil"><span class="c-gris">•</span> ${lier(c)}</div>`; return; }
+        fermer();
         const t = titre[1], m = t.match(/(\d+) (?:à|to) (\d+)/), n = etat.niveau;
         const affiche = m ? T("Niveaux %d à %d", m[1], m[2]) : Dn(t);
         const actuel = m && n >= +m[1] && (n < +m[2] || (+m[2] === 60 && n === 60));
-        h += actuel ? `<div class="titre-conseils c-vert${i ? "" : " premier"}">&gt; ${esc(affiche)}&nbsp; ${esc(T("(ton niveau)"))}</div>`
-                    : `<div class="titre-conseils c-or${i ? "" : " premier"}">${esc(affiche)}</div>`;
+        titreCourant = titreSection(affiche, actuel); contenu = ""; num++;
       });
+      fermer();
       h += `<div>&nbsp;</div><div class="c-gris">${esc(T("Talents, stats et BiS : %s, mis à jour le %s.", Dn(classe.source), classe.majLe))}</div><div class="c-gris">AideClasse v0.5.0</div>`;
     }
     $("defile").innerHTML = h;
@@ -835,6 +894,14 @@ body {
     const b = e.target.closest("button[data-mode]"); if (!b) return;
     const sous = SOUS[etat.onglet]; if (!sous) return;
     etat[sous.cle] = b.dataset.mode; $("defile").scrollTop = 0; rafraichir();
+  });
+  // Titres de section : replier / déplier (sans redessiner, la position de défilement reste la même).
+  $("defile").addEventListener("click", (e) => {
+    const t = e.target.closest(".tete-section"); if (!t) return;
+    const s = t.parentElement, cle = s.dataset.section, r = !s.classList.contains("replie");
+    s.classList.toggle("replie", r); t.setAttribute("aria-expanded", String(!r));
+    if (r) etat.replis[cle] = true; else delete etat.replis[cle];
+    cacherBulle(); sauver();
   });
   $("defile").addEventListener("click", (e) => {
     const b = e.target.closest("[data-point]"); if (!b) return;
