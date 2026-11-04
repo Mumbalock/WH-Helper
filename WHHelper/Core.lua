@@ -1,4 +1,4 @@
--- AideClasse : noyau (base de données sauvegardée, événements, commandes)
+-- WH Helper : noyau (base de données sauvegardée, événements, commandes)
 local addonName, ns = ...
 
 ns.data = {}          -- rempli par Data\<Classe>.lua (généré depuis Wowhead), indexé par classe
@@ -26,7 +26,7 @@ local function applyDefaults(dst, src)
 end
 
 function ns.Print(msg)
-    DEFAULT_CHAT_FRAME:AddMessage("|cff9482c9AideClasse|r : " .. tostring(msg))
+    DEFAULT_CHAT_FRAME:AddMessage("|cff9482c9WH Helper|r : " .. tostring(msg))
 end
 
 -- Classe, spé et build ------------------------------------------------------
@@ -181,7 +181,7 @@ end
 function ns.SetWaypoint(map, x, y, title)
     if TomTom and TomTom.AddWaypoint then
         local ok = pcall(TomTom.AddWaypoint, TomTom, map, x / 100, y / 100,
-            { title = title, persistent = false, minimap = true, world = true, from = "AideClasse" })
+            { title = title, persistent = false, minimap = true, world = true, from = "WH Helper" })
         if ok then return "TomTom" end
     end
     if C_Map and C_Map.SetUserWaypoint and UiMapPoint and UiMapPoint.CreateFromCoordinates then
@@ -250,17 +250,17 @@ f:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 
 f:SetScript("OnEvent", function(self, event, arg1)
     if event == "ADDON_LOADED" and arg1 == addonName then
-        AideClasseDB = AideClasseDB or {}
-        applyDefaults(AideClasseDB, defaults)
-        ns.db = AideClasseDB
+        WHHelperDB = WHHelperDB or {}
+        applyDefaults(WHHelperDB, defaults)
+        ns.db = WHHelperDB
     elseif event == "PLAYER_LOGIN" then
         if ns.CreateMinimapButton then ns.CreateMinimapButton() end
         if ns.HookTooltips then ns.HookTooltips() end
         local classData = ns.GetClassData()
         if classData then
-            ns.Print(ns.T("chargé (données Wowhead du %s). Tape /aideclasse ou clique sur l'icône de la minimap.", classData.majLe or "?"))
+            ns.Print(ns.T("chargé (données Wowhead du %s). Tape /whh ou clique sur l'icône de la minimap.", classData.majLe or "?"))
         else
-            ns.Print(ns.T("pas encore de données pour ta classe. Tape /aideclasse pour plus d'infos."))
+            ns.Print(ns.T("pas encore de données pour ta classe. Tape /whh pour plus d'infos."))
         end
     elseif event ~= "ADDON_LOADED" then
         refreshSoon()
@@ -269,9 +269,11 @@ end)
 
 -- Commandes -----------------------------------------------------------------
 
-SLASH_AIDECLASSE1 = "/aideclasse"
-SLASH_AIDECLASSE2 = "/acl"
-SlashCmdList["AIDECLASSE"] = function(msg)
+SLASH_WHHELPER1 = "/whh"
+SLASH_WHHELPER2 = "/whhelper"
+SLASH_WHHELPER3 = "/aideclasse" -- ancien nom de l'addon
+SLASH_WHHELPER4 = "/acl"
+SlashCmdList["WHHELPER"] = function(msg)
     msg = strlower(strtrim(msg or ""))
     if msg == "minimap" then
         ns.db.minimap.hide = not ns.db.minimap.hide
@@ -298,14 +300,14 @@ SlashCmdList["AIDECLASSE"] = function(msg)
     elseif msg == "taille" or msg == "reset" then
         ns.ResetSize(); ns.Print(ns.T("taille de la fenêtre remise par défaut."))
     elseif msg == "aide" or msg == "help" then
-        ns.Print(ns.T("/aideclasse : ouvrir/fermer la fenêtre"))
-        ns.Print(ns.T("/aideclasse talents | stuff | conseils : ouvrir un onglet"))
-        ns.Print(ns.T("/aideclasse zones : zones de montée en niveau"))
-        ns.Print(ns.T("/aideclasse rotation : rotation de ta spé — /aideclasse enchants : enchantements et compos"))
-        ns.Print(ns.T("/aideclasse spe : spécialisation suivante — /aideclasse build : build suivant"))
-        ns.Print(ns.T("/aideclasse minimap : cacher/afficher l'icône"))
-        ns.Print(ns.T("/aideclasse fr | en : langue de l'interface"))
-        ns.Print(ns.T("/aideclasse taille : remettre la fenêtre à sa taille par défaut"))
+        ns.Print(ns.T("/whh : ouvrir/fermer la fenêtre"))
+        ns.Print(ns.T("/whh talents | stuff | conseils : ouvrir un onglet"))
+        ns.Print(ns.T("/whh zones : zones de montée en niveau"))
+        ns.Print(ns.T("/whh rotation : rotation de ta spé — /whh enchants : enchantements et compos"))
+        ns.Print(ns.T("/whh spe : spécialisation suivante — /whh build : build suivant"))
+        ns.Print(ns.T("/whh minimap : cacher/afficher l'icône"))
+        ns.Print(ns.T("/whh fr | en : langue de l'interface"))
+        ns.Print(ns.T("/whh taille : remettre la fenêtre à sa taille par défaut"))
     else
         ns.Toggle()
     end

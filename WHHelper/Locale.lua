@@ -1,4 +1,4 @@
--- AideClasse : langue de l'interface (français / anglais)
+-- WH Helper : langue de l'interface (français / anglais)
 -- Le code est écrit en français ; ns.T() renvoie la traduction anglaise quand la langue est "en".
 --   ns.T("Niveau %d", 12)  -> "Niveau 12" ou "Level 12"
 --   ns.D("Givre")          -> nom venant des données (classe, arbre, spé, build, emplacement...)
@@ -29,8 +29,8 @@ local EN = {
     ["Enchantements pendant la montée"] = "Enchants while leveling",
     ["Enchantements au niveau 60"] = "Enchants at level 60",
     ["Consommables par tranche de niveau"] = "Consumables by level range",
-    ["/aideclasse rotation : rotation de ta spé — /aideclasse enchants : enchantements et compos"] =
-        "/aideclasse rotation: your spec's rotation — /aideclasse enchants: enchants and consumables",
+    ["/whh rotation : rotation de ta spé — /whh enchants : enchantements et compos"] =
+        "/whh rotation: your spec's rotation — /whh enchants: enchants and consumables",
     ["Build :"] = "Build:",
     ["Lien Wowhead :"] = "Wowhead link:",
     ["Point"] = "Waypoint",
@@ -102,7 +102,7 @@ local EN = {
     -- Fenêtre, infobulles, minimap
     ["%s : pas encore de données pour cette classe.\n\nLes données arrivent avec la mise à jour automatique depuis Wowhead."] =
         "%s: no data for this class yet.\n\nData arrives with the automatic update from Wowhead.",
-    ["AideClasse : %s %s (%s)"] = "AideClasse: %s %s (%s)",
+    ["WH Helper : %s %s (%s)"] = "WH Helper: %s %s (%s)",
     ["Clic gauche : ouvrir / fermer"] = "Left-click: open / close",
     ["Clic droit : onglet Stuff"] = "Right-click: Gear tab",
     ["Glisser : déplacer l'icône"] = "Drag: move the icon",
@@ -113,22 +113,22 @@ local EN = {
     -- Messages et commandes
     ["sort %d"] = "spell %d",
     ["objet %d"] = "item %d",
-    ["chargé (données Wowhead du %s). Tape /aideclasse ou clique sur l'icône de la minimap."] =
-        "loaded (Wowhead data from %s). Type /aideclasse or click the minimap icon.",
-    ["pas encore de données pour ta classe. Tape /aideclasse pour plus d'infos."] =
-        "no data for your class yet. Type /aideclasse for more info.",
+    ["chargé (données Wowhead du %s). Tape /whh ou clique sur l'icône de la minimap."] =
+        "loaded (Wowhead data from %s). Type /whh or click the minimap icon.",
+    ["pas encore de données pour ta classe. Tape /whh pour plus d'infos."] =
+        "no data for your class yet. Type /whh for more info.",
     ["icône minimap cachée."] = "minimap icon hidden.",
     ["icône minimap affichée."] = "minimap icon shown.",
     ["langue : français."] = "language: English.",
-    ["/aideclasse : ouvrir/fermer la fenêtre"] = "/aideclasse: open/close the window",
-    ["/aideclasse talents | stuff | conseils : ouvrir un onglet"] = "/aideclasse talents | stuff | conseils: open a tab",
-    ["/aideclasse zones : zones de montée en niveau"] = "/aideclasse zones: leveling zones",
-    ["/aideclasse spe : spécialisation suivante — /aideclasse build : build suivant"] =
-        "/aideclasse spe: next specialization — /aideclasse build: next build",
-    ["/aideclasse minimap : cacher/afficher l'icône"] = "/aideclasse minimap: hide/show the icon",
-    ["/aideclasse fr | en : langue de l'interface"] = "/aideclasse fr | en: interface language",
+    ["/whh : ouvrir/fermer la fenêtre"] = "/whh: open/close the window",
+    ["/whh talents | stuff | conseils : ouvrir un onglet"] = "/whh talents | stuff | conseils: open a tab",
+    ["/whh zones : zones de montée en niveau"] = "/whh zones: leveling zones",
+    ["/whh spe : spécialisation suivante — /whh build : build suivant"] =
+        "/whh spe: next specialization — /whh build: next build",
+    ["/whh minimap : cacher/afficher l'icône"] = "/whh minimap: hide/show the icon",
+    ["/whh fr | en : langue de l'interface"] = "/whh fr | en: interface language",
     ["taille de la fenêtre remise par défaut."] = "window size reset to default.",
-    ["/aideclasse taille : remettre la fenêtre à sa taille par défaut"] = "/aideclasse taille: reset the window to its default size",
+    ["/whh taille : remettre la fenêtre à sa taille par défaut"] = "/whh taille: reset the window to its default size",
 }
 
 -- Libellés venant des fichiers de données (générés en français).

@@ -1,4 +1,4 @@
--- FICHIER GÉNÉRÉ AUTOMATIQUEMENT par MiseAJour/aideclasse_maj.py
+-- FICHIER GÉNÉRÉ AUTOMATIQUEMENT par MiseAJour/whhelper_maj.py
 -- Ne pas modifier à la main : il est remplacé à chaque mise à jour.
 local _, ns = ...
 

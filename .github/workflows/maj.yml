@@ -1,7 +1,7 @@
-# Mise à jour quotidienne d'AideClasse depuis les guides Wowhead, faite par GitHub.
+# Mise à jour quotidienne de WH Helper depuis les guides Wowhead, faite par GitHub.
 # Le programme ne télécharge les guides que si Wowhead a publié du nouveau, puis les
 # fichiers régénérés sont enregistrés dans le dépôt. Les PC récupèrent ensuite l'addon
-# avec « aideclasse_maj.py --depuis-github » (voir MiseAJour/installer_auto.bat).
+# avec « whhelper_maj.py --depuis-github » (voir MiseAJour/installer_auto.bat).
 name: Mise à jour depuis Wowhead
 
 on:
@@ -43,14 +43,14 @@ jobs:
           restore-keys: icones-
 
       - name: Lecture de Wowhead
-        run: python MiseAJour/aideclasse_maj.py --sans-copie ${{ inputs.force && '--force' || '' }}
+        run: python MiseAJour/whhelper_maj.py --sans-copie ${{ inputs.force && '--force' || '' }}
 
       - name: Enregistrement dans le dépôt
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
           # Fichiers régénérés + état de la dernière mise à jour (gardé d'un jour à l'autre).
-          git add AideClasse/Data Simulateur/simulateur.html MiseAJour/etat.json MiseAJour/derniers_guides.json
+          git add WHHelper/Data Simulateur/simulateur.html MiseAJour/etat.json MiseAJour/derniers_guides.json
           if git diff --cached --quiet; then
             echo "Rien à enregistrer."
           else

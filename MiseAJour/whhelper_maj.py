@@ -1,8 +1,8 @@
-"""Mise à jour automatique d'AideClasse depuis les guides Wowhead (WoW Forever).
+"""Mise à jour automatique de WH Helper depuis les guides Wowhead (WoW Forever).
 
 Ce que fait le programme :
   1. lit les guides Wowhead de chaque spécialisation (talents, BiS, stats) ;
-  2. génère AideClasse/Data/<Classe>.lua ;
+  2. génère WHHelper/Data/<Classe>.lua ;
   3. copie l'addon complet dans le dossier AddOns du jeu.
 
 Avant de tout télécharger, il vérifie s'il y a du nouveau chez Wowhead
@@ -41,14 +41,14 @@ except ImportError:          # serveur GitHub (Linux) : pas de jeu à trouver
 
 ICI = os.path.dirname(os.path.abspath(__file__))
 RACINE = os.path.dirname(ICI)
-ADDON_SRC = os.path.join(RACINE, "AideClasse")
+ADDON_SRC = os.path.join(RACINE, "WHHelper")
 ETAT = os.path.join(ICI, "etat.json")
 DERNIERS = os.path.join(ICI, "derniers_guides.json")   # dernières données lues, par classe et par spé
 CONFIG = os.path.join(ICI, "config.txt")
 JOURNAL = os.path.join(ICI, "journal.txt")
 
 BASE = "https://www.wowhead.com/forever"
-UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AideClasse-MiseAJour/0.2"
+UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) WHHelper-MiseAJour/0.2"
 PAUSE = 1.5          # secondes entre deux pages
 
 def _classe(slug, nom, arbres):
@@ -567,7 +567,7 @@ def generer_classe(token, classe, tdata, anciennes=None):
         "arbres": construire_arbres(classe, tdata),
         "specs": specs,
     }
-    entete = ("-- FICHIER GÉNÉRÉ AUTOMATIQUEMENT par MiseAJour/aideclasse_maj.py\n"
+    entete = ("-- FICHIER GÉNÉRÉ AUTOMATIQUEMENT par MiseAJour/whhelper_maj.py\n"
               "-- Ne pas modifier à la main : il est remplacé à chaque mise à jour.\n"
               "local _, ns = ...\n\n")
     return entete + f"ns.data.{token} = " + lua(donnees) + "\n", donnees, reprises
@@ -957,7 +957,8 @@ def trouver_addons(arg):
             if not (nom.startswith("_") and nom.endswith("_") and os.path.isdir(chemin)):
                 continue
             addons = os.path.join(chemin, "Interface", "AddOns")
-            if os.path.isfile(os.path.join(addons, "AideClasse", "AideClasse.toc")):
+            if (os.path.isfile(os.path.join(addons, "WHHelper", "WHHelper.toc"))
+                    or os.path.isfile(os.path.join(addons, ANCIEN_NOM, ANCIEN_NOM + ".toc"))):
                 trouves.append(addons)
             elif nom.lower() not in connus or "forever" in nom.lower():
                 autres.append(addons)
@@ -973,8 +974,15 @@ def trouver_addons(arg):
     return None
 
 
+ANCIEN_NOM = "AideClasse"   # ancien nom de l'addon : son dossier est retiré du jeu
+
+
 def copier_addon(addons, source=ADDON_SRC):
-    dest = os.path.join(addons, "AideClasse")
+    ancien = os.path.join(addons, ANCIEN_NOM)
+    if os.path.isfile(os.path.join(ancien, ANCIEN_NOM + ".toc")):
+        shutil.rmtree(ancien)
+        log(f"Ancien addon {ANCIEN_NOM} retiré du jeu")
+    dest = os.path.join(addons, "WHHelper")
     os.makedirs(addons, exist_ok=True)
     tmp = dest + ".maj"
     if os.path.isdir(tmp):
@@ -988,7 +996,7 @@ def copier_addon(addons, source=ADDON_SRC):
 
 # --- Récupération depuis GitHub -------------------------------------------------
 
-DEPOT = "Mumbalock/ADDON-WOWHEAD"
+DEPOT = "Mumbalock/WH-Helper"
 BRANCHE = "main"
 ETAT_PC = os.path.join(ICI, "etat_pc.json")   # dernière version GitHub installée sur ce PC
 
@@ -1016,7 +1024,7 @@ def depuis_github(jeu, force):
         commit = json.load(r)
     sha = commit["sha"]
     date = commit["commit"]["committer"]["date"][:16].replace("T", " ")
-    deja_la = os.path.isfile(os.path.join(addons, "AideClasse", "AideClasse.toc"))
+    deja_la = os.path.isfile(os.path.join(addons, "WHHelper", "WHHelper.toc"))
     if sha == etat.get("sha") and deja_la and not force:
         log(f"Rien de nouveau sur GitHub (version du {date} UTC déjà installée).")
         return
@@ -1032,10 +1040,10 @@ def depuis_github(jeu, force):
         with zipfile.ZipFile(io.BytesIO(octets)) as z:
             z.extractall(tmp)
         racines = [os.path.join(tmp, n) for n in os.listdir(tmp)]
-        source = next((os.path.join(r, "AideClasse") for r in racines
-                       if os.path.isfile(os.path.join(r, "AideClasse", "AideClasse.toc"))), None)
+        source = next((os.path.join(r, "WHHelper") for r in racines
+                       if os.path.isfile(os.path.join(r, "WHHelper", "WHHelper.toc"))), None)
         if not source:
-            raise ValueError("dossier AideClasse introuvable dans l'archive GitHub")
+            raise ValueError("dossier WHHelper introuvable dans l'archive GitHub")
         copier_addon(addons, source)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

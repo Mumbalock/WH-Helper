@@ -1,4 +1,4 @@
--- AideClasse : fenêtre principale
+-- WH Helper : fenêtre principale
 --   Talents  : les 3 arbres en icônes + barre de niveau (quel talent à quel niveau)
 --   Stuff    : Équipement (stats + BiS) / Enchants & compos
 --   Conseils : Classe / Rotation (icônes, par tranche de niveau) / Zones d'xp
@@ -989,7 +989,7 @@ local function refreshClasse(classData)
     S.endSection()
     S.line(GREY .. T("Talents, stats et BiS : %s, mis à jour le %s.",
         D(classData.source or "?"), classData.majLe or "?") .. "|r", 16)
-    S.line(GREY .. "AideClasse v" .. ns.version .. "|r")
+    S.line(GREY .. "WH Helper v" .. ns.version .. "|r")
     content:SetHeight(-S.y + 10)
 end
 
@@ -1039,7 +1039,7 @@ end
 -- Fenêtre -------------------------------------------------------------------------
 
 local function createFrame()
-    frame = CreateFrame("Frame", "AideClasseFrame", UIParent, "BasicFrameTemplateWithInset")
+    frame = CreateFrame("Frame", "WHHelperFrame", UIParent, "BasicFrameTemplateWithInset")
     frame:SetSize(W, H)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("DIALOG")
@@ -1051,7 +1051,7 @@ local function createFrame()
     frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
     frame:SetScript("OnHide", function() if buildMenu then buildMenu:Hide() end end)
     frame:Hide()
-    tinsert(UISpecialFrames, "AideClasseFrame") -- fermeture avec Échap
+    tinsert(UISpecialFrames, "WHHelperFrame") -- fermeture avec Échap
 
     frame.title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     frame.title:SetPoint("TOP", frame, "TOP", 0, -5)
@@ -1130,7 +1130,7 @@ local function createFrame()
         end
     end
 
-    scroll = CreateFrame("ScrollFrame", "AideClasseScroll", scrollView, "UIPanelScrollFrameTemplate")
+    scroll = CreateFrame("ScrollFrame", "WHHelperScroll", scrollView, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT")
     scroll:SetPoint("BOTTOMRIGHT", -20, 0)
     content = CreateFrame("Frame", nil, scroll)
@@ -1249,7 +1249,7 @@ function ns.Refresh()
     if not frame or not frame:IsShown() then return end
     updateStaticTexts()
     local classData = ns.GetClassData()
-    frame.title:SetText("AideClasse" .. (classData and (" – " .. D(classData.nom)) or ""))
+    frame.title:SetText("WH Helper" .. (classData and (" – " .. D(classData.nom)) or ""))
     for key, b in pairs(tabButtons) do
         if key == currentTab then b:Disable() else b:Enable() end
     end
@@ -1365,7 +1365,7 @@ local function onItemTooltip(tooltip, itemID)
     for _, spec in pairs(classData.specs) do
         for _, o in ipairs(spec.objets or {}) do
             if o.id == itemID then
-                tooltip:AddLine(T("AideClasse : %s %s (%s)", D(o.rang or "BiS"), D(spec.nom), D(o.emplacement or "")), 0.58, 0.51, 0.79)
+                tooltip:AddLine(T("WH Helper : %s %s (%s)", D(o.rang or "BiS"), D(spec.nom), D(o.emplacement or "")), 0.58, 0.51, 0.79)
             end
         end
     end

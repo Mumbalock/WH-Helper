@@ -1,4 +1,4 @@
--- AideClasse : traduction anglaise des textes de Data\Enchants.lua et Data\Rotation.lua (écrite à la main).
+-- WH Helper : traduction anglaise des textes de Data\Enchants.lua et Data\Rotation.lua (écrite à la main).
 -- Clé = texte français exact (nom d'enchantement, emplacement, note, nom de profil, consommable, sort, note de rotation).
 -- Si tu modifies ou ajoutes un texte dans ces fichiers, ajoute aussi sa clé ici, sinon il restera en français.
 local _, ns = ...

@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>Simulateur AideClasse</title>
+<title>Simulateur WH Helper</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Alegreya+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -238,7 +238,7 @@ body {
 </style>
 
 <header class="entete">
-  <h1>Simulateur AideClasse</h1>
+  <h1>Simulateur WH Helper</h1>
   <p>Aperçu de l'addon tel qu'il apparaîtra dans WoW Forever, avec les vraies données Wowhead téléchargées par le programme de mise à jour.</p>
 </header>
 
@@ -247,11 +247,11 @@ body {
     <div class="minimap" id="minimap">
       <div class="zone">Forêt d'Elwynn</div>
       <div class="carte"></div>
-      <button class="bouton-mini" id="boutonMini" aria-label="AideClasse : ouvrir ou fermer"><img id="iconeMini" alt=""></button>
+      <button class="bouton-mini" id="boutonMini" aria-label="WH Helper : ouvrir ou fermer"><img id="iconeMini" alt=""></button>
     </div>
 
-    <div class="fenetre" id="fenetre" hidden role="dialog" aria-label="Fenêtre AideClasse">
-      <div class="barre" id="barre"><span id="titre">AideClasse</span><button class="langue" id="langue" type="button">FR</button><button class="fermer" id="fermer" aria-label="Fermer">✕</button></div>
+    <div class="fenetre" id="fenetre" hidden role="dialog" aria-label="Fenêtre WH Helper">
+      <div class="barre" id="barre"><span id="titre">WH Helper</span><button class="langue" id="langue" type="button">FR</button><button class="fermer" id="fermer" aria-label="Fermer">✕</button></div>
       <div class="outils">
         <div class="groupe" id="onglets"></div>
         <div class="groupe" role="group" aria-label="Spécialisation"><span class="nom-spe" id="nomSpe"></span><span class="groupe" id="casesSpe"></span></div>
@@ -283,7 +283,7 @@ body {
 
     <div class="chat">
       <div class="messages" id="messages" aria-live="polite"></div>
-      <form id="formChat"><input id="saisie" autocomplete="off" placeholder="Tape une commande, ex. /aideclasse" aria-label="Ligne de chat"><button class="bjeu" type="submit">Envoyer</button></form>
+      <form id="formChat"><input id="saisie" autocomplete="off" placeholder="Tape une commande, ex. /whh" aria-label="Ligne de chat"><button class="bjeu" type="submit">Envoyer</button></form>
     </div>
     <div class="infobulle" id="infobulle" hidden></div>
   </section>
@@ -398,10 +398,10 @@ body {
   };
   const ROTATIONS = D.rotations || {}, ENCHANTS = D.enchants || {}, SORTS = D.sorts || {};
   etat.replis = {};
-  try { Object.assign(etat, JSON.parse(localStorage.getItem("aideclasse-sim3") || "{}")); } catch (e) {}
+  try { Object.assign(etat, JSON.parse(localStorage.getItem("whhelper-sim3") || "{}")); } catch (e) {}
   chargerClasse(etat.classe); etat.classe = classe.token;
   if (!classe.specs[etat.spec]) etat.spec = classe.defaultSpec;
-  const sauver = () => { try { localStorage.setItem("aideclasse-sim3", JSON.stringify(etat)); } catch (e) {} };
+  const sauver = () => { try { localStorage.setItem("whhelper-sim3", JSON.stringify(etat)); } catch (e) {} };
 
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -437,7 +437,7 @@ body {
   }
 
   function chat(html) { const d = document.createElement("div"); d.innerHTML = html; $("messages").appendChild(d); $("messages").scrollTop = $("messages").scrollHeight; }
-  const prefixe = '<span class="c-demo">AideClasse</span> : ';
+  const prefixe = '<span class="c-demo">WH Helper</span> : ';
 
   // --- Vue Talents ---
   function rendreTalents() {
@@ -657,7 +657,7 @@ body {
         titreCourant = titreSection(affiche, actuel); contenu = ""; num++;
       });
       fermer();
-      h += `<div>&nbsp;</div><div class="c-gris">${esc(T("Talents, stats et BiS : %s, mis à jour le %s.", Dn(classe.source), classe.majLe))}</div><div class="c-gris">AideClasse v0.5.0</div>`;
+      h += `<div>&nbsp;</div><div class="c-gris">${esc(T("Talents, stats et BiS : %s, mis à jour le %s.", Dn(classe.source), classe.majLe))}</div><div class="c-gris">WH Helper v0.5.0</div>`;
     }
     $("defile").innerHTML = h;
   }
@@ -665,7 +665,7 @@ body {
   function rafraichir() {
     const sp = spec(), bb = build();
     cacherBulle();   // l'élément survolé va être redessiné : sa bulle ne recevrait jamais de mouseout
-    $("titre").textContent = "AideClasse – " + Dn(classe.nom);
+    $("titre").textContent = "WH Helper – " + Dn(classe.nom);
     $("langue").textContent = anglais() ? "EN" : "FR";
     $("langue").setAttribute("aria-label", T("Changer de langue"));
     $("poignee").setAttribute("aria-label", T("Redimensionner"));
@@ -739,7 +739,7 @@ body {
     const m = brut.match(/^\/(\S+)\s*(.*)$/);
     if (!m) { chat('<span class="c-gris">(Dans le jeu, ce texte partirait dans le canal de discussion.)</span>'); return; }
     const cmd = m[1].toLowerCase(), msg = m[2].trim().toLowerCase();
-    if (cmd !== "aideclasse" && cmd !== "acl") { chat('<span style="color:#ffff00">Commande inconnue. Tape /aideclasse aide.</span>'); return; }
+    if (!["whh", "whhelper", "aideclasse", "acl"].includes(cmd)) { chat('<span style="color:#ffff00">Commande inconnue. Tape /whh aide.</span>'); return; }
     if (msg === "minimap") { etat.cacheMini = !etat.cacheMini; chat(prefixe + esc(T(etat.cacheMini ? "icône minimap cachée." : "icône minimap affichée."))); rafraichir(); }
     else if (msg === "fr" || msg === "en") changerLangue(msg);
     else if (msg === "langue" || msg === "lang" || msg === "language") changerLangue(anglais() ? "fr" : "en");
@@ -751,12 +751,12 @@ body {
     else if (msg === "spe" || msg === "spé") { speSuivante(); montrer("talents"); }
     else if (msg === "build") { buildSuivant(); montrer("talents"); }
     else if (msg === "aide" || msg === "help") {
-      for (const l of ["/aideclasse : ouvrir/fermer la fenêtre", "/aideclasse talents | stuff | conseils : ouvrir un onglet",
-        "/aideclasse zones : zones de montée en niveau",
-        "/aideclasse rotation : rotation de ta spé — /aideclasse enchants : enchantements et compos",
-        "/aideclasse spe : spécialisation suivante — /aideclasse build : build suivant",
-        "/aideclasse minimap : cacher/afficher l'icône", "/aideclasse fr | en : langue de l'interface",
-        "/aideclasse taille : remettre la fenêtre à sa taille par défaut"]) chat(prefixe + esc(T(l)));
+      for (const l of ["/whh : ouvrir/fermer la fenêtre", "/whh talents | stuff | conseils : ouvrir un onglet",
+        "/whh zones : zones de montée en niveau",
+        "/whh rotation : rotation de ta spé — /whh enchants : enchantements et compos",
+        "/whh spe : spécialisation suivante — /whh build : build suivant",
+        "/whh minimap : cacher/afficher l'icône", "/whh fr | en : langue de l'interface",
+        "/whh taille : remettre la fenêtre à sa taille par défaut"]) chat(prefixe + esc(T(l)));
     } else basculer();
   }
   // Bouton FR / EN de la fenêtre (comme ns.SetLang : change la langue et redessine).
@@ -769,7 +769,7 @@ body {
     `<b>${esc(T("Changer de langue"))}</b>${esc(T("Interface en français. Clic : passer en anglais."))}`, true));
   $("langue").addEventListener("mouseleave", cacherBulle);
   $("formChat").addEventListener("submit", (e) => { e.preventDefault(); commande($("saisie").value); $("saisie").value = ""; });
-  for (const c of ["/aideclasse", "/aideclasse stuff", "/aideclasse enchants", "/aideclasse conseils", "/aideclasse rotation", "/aideclasse zones", "/aideclasse minimap", "/aideclasse langue", "/aideclasse taille", "/aideclasse aide"]) {
+  for (const c of ["/whh", "/whh stuff", "/whh enchants", "/whh conseils", "/whh rotation", "/whh zones", "/whh minimap", "/whh langue", "/whh taille", "/whh aide"]) {
     const b = document.createElement("button"); b.type = "button"; b.innerHTML = `<code>${c}</code>`;
     b.addEventListener("click", () => commande(c)); $("raccourcis").appendChild(b);
   }
@@ -794,7 +794,7 @@ body {
   bouton.addEventListener("pointerup", (e) => { const g = glisse; glisse = null; if (g && g.bouge) { sauver(); return; } if (e.button === 0) basculer(); });
   bouton.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); basculer(); } });
   bouton.addEventListener("contextmenu", (e) => { e.preventDefault(); montrer("stuff"); });
-  bouton.addEventListener("mouseenter", () => bulle(bouton, "<b>AideClasse</b>" + ["Clic gauche : ouvrir / fermer", "Clic droit : onglet Stuff", "Glisser : déplacer l'icône"].map((l) => esc(T(l))).join("<br>"), true));
+  bouton.addEventListener("mouseenter", () => bulle(bouton, "<b>WH Helper</b>" + ["Clic gauche : ouvrir / fermer", "Clic droit : onglet Stuff", "Glisser : déplacer l'icône"].map((l) => esc(T(l))).join("<br>"), true));
   bouton.addEventListener("mouseleave", cacherBulle);
 
   // --- Infobulles ---
@@ -875,7 +875,7 @@ body {
     const o = e.target.closest("[data-objet]"); if (!o || e.target.closest("[data-wh]")) return;
     const exemple = !(spec().objets && spec().objets.length);
     const it = (exemple ? EXEMPLE_BIS : spec().objets).find((x) => String(x.id) === o.dataset.objet); if (!it) return;
-    const addon = `<span class="c-demo">${esc(T("AideClasse : %s %s (%s)", Dn(it.rang), Dn(spec().nom), Dn(it.emplacement)))}</span>`;
+    const addon = `<span class="c-demo">${esc(T("WH Helper : %s %s (%s)", Dn(it.rang), Dn(spec().nom), Dn(it.emplacement)))}</span>`;
     const secours = `<b class="c-epique">${esc(exTexte(it, "nom"))}</b><span class="c-blanc">${esc(Dn(it.emplacement))}</span>`;
     if (exemple) bulle(o.querySelector("img"), `<div class="wh-corps">${secours}<br><span class="c-gris">${anglais() ? "(example item)" : "(objet d'exemple)"}</span><div class="wh-addon">${addon}</div></div>`, false, true);
     else bulleWh(o.querySelector("img"), "item", it.id, secours, addon);
@@ -1033,7 +1033,7 @@ body {
     $("choixClasse").appendChild(b);
   }
   $("dateMaj").textContent = classe.majLe;
-  chat(prefixe + esc(T("chargé (données Wowhead du %s). Tape /aideclasse ou clique sur l'icône de la minimap.", classe.majLe)));
+  chat(prefixe + esc(T("chargé (données Wowhead du %s). Tape /whh ou clique sur l'icône de la minimap.", classe.majLe)));
   etat.vue = Math.max(10, Math.min(60, etat.niveau));
   appliquerTaille();
   montrer();

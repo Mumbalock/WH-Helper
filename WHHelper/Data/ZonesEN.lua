@@ -1,4 +1,4 @@
--- AideClasse : traduction anglaise des textes de Data\Zones.lua (écrite à la main).
+-- WH Helper : traduction anglaise des textes de Data\Zones.lua (écrite à la main).
 -- Clé = texte français exact de Zones.lua (nom de zone, nom de camp ou texte d'accès).
 -- Si tu modifies un texte dans Zones.lua, mets aussi à jour sa clé ici, sinon il restera en français.
 local _, ns = ...

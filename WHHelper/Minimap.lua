@@ -1,4 +1,4 @@
--- AideClasse : bouton autour de la minimap (clic = ouvrir, glisser = déplacer)
+-- WH Helper : bouton autour de la minimap (clic = ouvrir, glisser = déplacer)
 local _, ns = ...
 
 local button
@@ -22,7 +22,7 @@ end
 function ns.CreateMinimapButton()
     if button or not Minimap then return end
 
-    button = CreateFrame("Button", "AideClasseMinimapButton", Minimap)
+    button = CreateFrame("Button", "WHHelperMinimapButton", Minimap)
     button:SetSize(31, 31)
     button:SetFrameStrata("MEDIUM")
     button:SetFrameLevel(8)
@@ -61,7 +61,7 @@ function ns.CreateMinimapButton()
     end)
     button:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-        GameTooltip:AddLine("AideClasse")
+        GameTooltip:AddLine("WH Helper")
         GameTooltip:AddLine(ns.T("Clic gauche : ouvrir / fermer"), 1, 1, 1)
         GameTooltip:AddLine(ns.T("Clic droit : onglet Stuff"), 1, 1, 1)
         GameTooltip:AddLine(ns.T("Glisser : déplacer l'icône"), 1, 1, 1)

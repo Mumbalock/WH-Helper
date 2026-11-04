@@ -1,4 +1,4 @@
--- AideClasse : version anglaise de Data\Conseils.lua (écrite à la main, PAS remplacée par la mise à jour).
+-- WH Helper : version anglaise de Data\Conseils.lua (écrite à la main, PAS remplacée par la mise à jour).
 -- Même ordre et mêmes catégories que le fichier français : si tu modifies un conseil là-bas, modifie-le ici aussi.
 -- Les titres « ## Levels A to B » sont mis en avant quand le personnage est dans cette tranche.
 -- Pas de guillemets doubles dans les textes.
