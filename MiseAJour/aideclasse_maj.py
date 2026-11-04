@@ -18,6 +18,7 @@ Options :
   --force          met à jour même si Wowhead n'a rien changé
   --sans-copie     ne copie pas l'addon dans le jeu
   --jeu CHEMIN     dossier AddOns du jeu (sinon détection automatique ou config.txt)
+  --simulateur     refait seulement Simulateur/simulateur.html (conseils, zones), sans téléchargement
 """
 import datetime
 import hashlib
@@ -600,6 +601,60 @@ def icones_simulateur(toutes):
     return res
 
 
+def lire_table_lua(source):
+    """Lit une table Lua simple (chaînes, nombres, true/false/nil, tables) et la renvoie en dict/list."""
+    jetons = re.findall(r'--[^\n]*|"(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?|[A-Za-z_][A-Za-z0-9_]*|[{}=,]', source)
+    jetons = [j for j in jetons if not j.startswith("--")]
+    pos = 0
+
+    def valeur():
+        nonlocal pos
+        j = jetons[pos]; pos += 1
+        if j == "{":
+            liste, dico = [], {}
+            while jetons[pos] != "}":
+                if re.match(r"^[A-Za-z_]", jetons[pos]) and jetons[pos + 1] == "=":
+                    cle = jetons[pos]; pos += 2
+                    dico[cle] = valeur()
+                else:
+                    liste.append(valeur())
+                if jetons[pos] == ",":
+                    pos += 1
+            pos += 1
+            return dico if dico else liste
+        if j.startswith('"'):
+            return json.loads(j)
+        if j in ("true", "false"):
+            return j == "true"
+        if j == "nil":
+            return None
+        return float(j) if "." in j else int(j)
+
+    return valeur()
+
+
+def lire_zones():
+    """Zones d'xp écrites à la main dans Data/Zones.lua (ns.zones = { ... })."""
+    chemin = os.path.join(ADDON_SRC, "Data", "Zones.lua")
+    if not os.path.isfile(chemin):
+        return []
+    with open(chemin, encoding="utf-8") as f:
+        source = f.read()
+    debut = source.find("{", source.find("ns.zones"))
+    return lire_table_lua(source[debut:]) if debut >= 0 else []
+
+
+def regenerer_simulateur():
+    """Refait le simulateur sans rien télécharger, avec les données de classes déjà présentes dans la page."""
+    page = os.path.join(RACINE, "Simulateur", "simulateur.html")
+    with open(page, encoding="utf-8") as f:
+        bloc = re.search(r'<script id="donnees" type="application/json">(.*?)</script>', f.read(), re.S)
+    if not bloc:
+        log("Simulateur : données introuvables dans simulateur.html, lance une mise à jour complète.")
+        return
+    generer_simulateur(json.loads(bloc.group(1))["classes"])
+
+
 def generer_simulateur(toutes):
     """Met à jour Simulateur/simulateur.html avec les mêmes données que l'addon (toutes les classes)."""
     modele = os.path.join(RACINE, "Simulateur", "simulateur_modele.html")
@@ -614,7 +669,7 @@ def generer_simulateur(toutes):
             bloc = re.search(r"ns\.conseils\.%s\s*=\s*\{(.*?)\n\}" % token, source, re.S)
             if bloc:
                 conseils[token] = [json.loads('"' + s + '"') for s in re.findall(r'"((?:[^"\\]|\\.)*)"', bloc.group(1))]
-    js = json.dumps({"classes": toutes, "conseils": conseils, "icones": icones_simulateur(toutes)},
+    js = json.dumps({"classes": toutes, "conseils": conseils, "zones": lire_zones(), "icones": icones_simulateur(toutes)},
                     ensure_ascii=False).replace("</", "<\\/")
     with open(modele, encoding="utf-8") as f:
         page = f.read().replace("__DONNEES__", js)
@@ -700,6 +755,9 @@ def main():
     force = "--force" in args
     sans_copie = "--sans-copie" in args
     jeu = args[args.index("--jeu") + 1] if "--jeu" in args and args.index("--jeu") + 1 < len(args) else None
+    if "--simulateur" in args:
+        regenerer_simulateur()
+        return
 
     etat = {}
     if os.path.isfile(ETAT):

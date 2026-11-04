@@ -151,6 +151,18 @@ body {
 .lien input { flex: 1; min-width: 0; background: #000; color: #fff; border: 1px solid #555; font-family: var(--f-mono); font-size: .72rem; padding: 3px 6px; }
 .titre-conseils { margin-top: 14px; margin-bottom: 2px; } .titre-conseils.premier { margin-top: 0; }
 .conseil { padding-left: 18px; text-indent: -10px; margin: 2px 0; }
+.sous-onglets { display: flex; gap: 4px; flex: none; }
+.sous-onglets[hidden] { display: none; }
+.z-nom { margin-top: 10px; }
+.z-ligne { padding-left: 22px; font-size: .8rem; }
+.z-hub { display: flex; align-items: center; gap: 8px; padding: 1px 4px 1px 22px; font-size: .8rem; }
+.z-hub:hover { background: linear-gradient(90deg, rgba(255,209,0,.12), transparent); }
+.z-hub span { flex: 1; }
+.z-hub .bjeu { min-width: 60px; height: 18px; font-size: .72rem; }
+.faction { display: flex; gap: 4px; }
+.faction button { flex: 1; font: inherit; font-size: .85rem; padding: 4px; border-radius: 3px; border: 1px solid var(--ligne); background: #120f18; color: var(--texte); cursor: pointer; }
+.faction button[aria-pressed="true"] { background: #2a2338; border-color: var(--or); }
+.faction button:focus-visible { outline: 2px solid var(--demo); outline-offset: 2px; }
 .c-or { color: var(--or); } .c-gris { color: var(--gris); } .c-vert { color: var(--vert); } .c-orange { color: var(--orange); }
 .c-sort { color: var(--sort); } .c-epique { color: var(--epique); } .c-blanc { color: #fff; } .c-demo { color: var(--demo); }
 
@@ -214,7 +226,12 @@ body {
         <div class="perso" id="perso"></div>
       </div>
 
-      <div class="vue" id="vueTexte" hidden><div class="defile" id="defile"></div></div>
+      <div class="vue" id="vueTexte" hidden>
+        <div class="sous-onglets" id="sousOnglets" role="group" aria-label="Conseils">
+          <button class="bjeu" data-mode="classe">Classe</button><button class="bjeu" data-mode="zones">Zones d'xp</button>
+        </div>
+        <div class="defile" id="defile"></div>
+      </div>
 
       <div class="lien"><span>Lien Wowhead :</span><input id="lien" readonly aria-label="Lien Wowhead à copier"></div>
     </div>
@@ -231,6 +248,16 @@ body {
     <div class="champ">
       <span class="etiquette">Classe</span>
       <div class="classes" id="choixClasse" role="group" aria-label="Classe simulée"></div>
+    </div>
+    <div class="champ">
+      <span class="etiquette">Faction</span>
+      <div class="faction" id="choixFaction" role="group" aria-label="Faction simulée">
+        <button type="button" data-faction="Alliance">Alliance</button><button type="button" data-faction="Horde">Horde</button>
+      </div>
+    </div>
+    <div class="champ">
+      <label class="case"><input type="checkbox" id="tomtom"> TomTom installé</label>
+      <p class="note">Change le message du bouton Point dans Zones d'xp.</p>
     </div>
     <div class="champ">
       <label for="niveau">Niveau <output id="vNiveau">25</output></label>
@@ -289,7 +316,9 @@ body {
   const ICONE_VIDE = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#222"/><text x="5" y="7.5" font-size="7" text-anchor="middle" fill="#888">?</text></svg>');
   const img = (nom) => ICONES[nom] || ICONE_VIDE;
 
-  const etat = { classe: "WARLOCK", niveau: 25, depenses: 16, vue: 25, spec: null, build: {}, onglet: "talents", exemple: false, cacheMini: false, angle: 225 };
+  const ZONES = D.zones || [], ZONES_URL = "https://www.wowhead.com/forever/zones";
+  const etat = { classe: "WARLOCK", niveau: 25, depenses: 16, vue: 25, spec: null, build: {}, onglet: "talents", exemple: false, cacheMini: false, angle: 225,
+    modeConseils: "classe", faction: "Alliance", tomtom: true, way: "" };
   try { Object.assign(etat, JSON.parse(localStorage.getItem("aideclasse-sim3") || "{}")); } catch (e) {}
   chargerClasse(etat.classe); etat.classe = classe.token;
   if (!classe.specs[etat.spec]) etat.spec = classe.defaultSpec;
@@ -380,9 +409,49 @@ body {
     $("perso").innerHTML = perso;
   }
 
+  // --- Zones d'xp (copie de refreshZones, UI.lua) ---
+  const commandeWay = (p) => `/way #${p.map} ${p.x.toFixed(1)} ${p.y.toFixed(1)} ${p.title}`;
+  let points = [];
+  function rendreZones() {
+    const f = etat.faction, n = etat.niveau;
+    const liste = ZONES.filter((z) => !z.camp || z.camp === f).sort((a, b) => a.min - b.min || a.max - b.max);
+    const bons = liste.filter((z) => n >= z.min && n <= z.max).map((z) => esc(z.nom));
+    points = [];
+    let h = `<div class="c-or">Zones de montée en niveau – ${esc(f)}</div>`
+      + '<div class="c-gris">Niveaux estimés par Wowhead (le jeu n\'en donne pas). Bouton Point : flèche TomTom, sinon point sur la carte.</div>'
+      + (etat.tomtom ? '<div class="c-vert">TomTom détecté.</div>' : '<div class="c-orange">TomTom non détecté : la commande /way s\'affiche en bas pour la copier.</div>')
+      + `<div>&nbsp;</div><div><span class="c-vert">Pour ton niveau (${n}) : </span>${bons.length ? bons.join(", ") : '<span class="c-gris">aucune zone listée</span>'}</div>`;
+    for (const z of liste) {
+      let col = "c-blanc", tag = "";
+      if (n >= z.min && n <= z.max) { col = "c-vert"; tag = '<span class="c-vert">&nbsp; (ton niveau)</span>'; }
+      else if (n > z.max) col = "c-gris";
+      else if (n < z.min - 5) col = "c-orange";
+      const camp = (z.camp || "Contestée") + (z.nouveau ? ", nouvelle zone Forever" : "");
+      h += `<div class="z-nom"><span class="${col}">${esc(z.nom)}</span>&nbsp; <span class="c-or">niv. ${z.min}–${z.max}</span>&nbsp; <span class="c-gris">(${esc(camp)})</span>${tag}</div>`;
+      const a = z.acces || {};
+      const acces = a[f] || a.tous || (a.Alliance && a.Horde ? `Alliance : ${a.Alliance} Horde : ${a.Horde}` : a.Alliance || a.Horde);
+      if (acces) h += `<div class="z-ligne">Accès : ${esc(acces)}</div>`;
+      let vus = 0;
+      const ajouter = (titre, p) => {
+        points.push(p);
+        h += `<div class="z-hub"><span>• ${esc(titre)}<span class="c-gris">&nbsp; ${p.x}, ${p.y}</span></span><button class="bjeu" data-point="${points.length - 1}">Point</button></div>`;
+      };
+      for (const hub of z.hubs || []) {
+        if (hub.f && hub.f !== f) continue;
+        ajouter(hub.nom, { map: hub.map || z.map, x: hub.x, y: hub.y, title: hub.nom }); vus++;
+      }
+      if (!z.hubs && z.map) ajouter("Centre de la zone", { map: z.map, x: 50, y: 50, title: z.nom });
+      else if (z.nouveau) h += '<div class="z-ligne c-gris">Coordonnées pas encore connues pour cette nouvelle zone.</div>';
+      else if (!vus) h += '<div class="z-ligne c-gris">Pas de camp de ta faction dans cette zone.</div>';
+    }
+    h += `<div>&nbsp;</div><div class="c-gris">Niveau 60 : Mont Hyjal (nouvelle zone de fin de jeu). Source : ${ZONES_URL}</div>`;
+    $("defile").innerHTML = h;
+  }
+
   // --- Vue Stuff / Conseils ---
   function rendreTexte() {
     const sp = spec(); let h = "";
+    if (etat.onglet === "conseils" && etat.modeConseils === "zones") { rendreZones(); return; }
     if (etat.onglet === "stuff") {
       h += `<div class="c-or">Priorité des statistiques (${esc(sp.nom)})</div>`;
       if (!sp.stats || !sp.stats.length) h += '<div class="c-gris">&nbsp;&nbsp;Pas encore disponible.</div>';
@@ -407,7 +476,7 @@ body {
         h += actuel ? `<div class="titre-conseils c-vert${i ? "" : " premier"}">&gt; ${esc(t)}&nbsp; (ton niveau)</div>`
                     : `<div class="titre-conseils c-or${i ? "" : " premier"}">${esc(t)}</div>`;
       });
-      h += `<div>&nbsp;</div><div class="c-gris">Talents, stats et BiS : ${esc(classe.source)}, mis à jour le ${esc(classe.majLe)}.</div><div class="c-gris">AideClasse v0.4.0</div>`;
+      h += `<div>&nbsp;</div><div class="c-gris">Talents, stats et BiS : ${esc(classe.source)}, mis à jour le ${esc(classe.majLe)}.</div><div class="c-gris">AideClasse v0.5.0</div>`;
     }
     $("defile").innerHTML = h;
   }
@@ -429,10 +498,16 @@ body {
       b.addEventListener("click", () => { etat.spec = k; fermerMenu(); rafraichir(); });
       $("casesSpe").appendChild(b);
     }
-    const talents = etat.onglet === "talents";
+    const talents = etat.onglet === "talents", zones = etat.onglet === "conseils" && etat.modeConseils === "zones";
     $("vueTalents").hidden = !talents; $("vueTexte").hidden = talents;
+    $("sousOnglets").hidden = etat.onglet !== "conseils";
+    $("sousOnglets").querySelectorAll("button").forEach((b) => { b.disabled = b.dataset.mode === etat.modeConseils; });
+    // Les zones ne dépendent pas de la classe : pas de cases de spé, comme dans le jeu.
+    $("casesSpe").style.display = zones ? "none" : ""; $("nomSpe").style.display = zones ? "none" : "";
     if (talents) rendreTalents(); else rendreTexte();
-    $("lien").value = (talents && bb && bb.b.lien) || sp.guide || "";
+    $("lien").value = zones ? (etat.way || ZONES_URL) : ((talents && bb && bb.b.lien) || sp.guide || "");
+    document.querySelectorAll("#choixFaction button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.faction === etat.faction));
+    $("tomtom").checked = etat.tomtom;
     // Panneau
     document.querySelectorAll("#choixClasse button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.token === classe.token));
     $("niveau").value = etat.niveau; $("vNiveau").textContent = etat.niveau;
@@ -478,17 +553,19 @@ body {
     if (cmd !== "aideclasse" && cmd !== "acl") { chat('<span style="color:#ffff00">Commande inconnue. Tape /aideclasse aide.</span>'); return; }
     if (msg === "minimap") { etat.cacheMini = !etat.cacheMini; chat(prefixe + (etat.cacheMini ? "icône minimap cachée." : "icône minimap affichée.")); rafraichir(); }
     else if (["talents", "stuff", "conseils"].includes(msg)) montrer(msg);
+    else if (msg === "zones" || msg === "zone") { etat.modeConseils = "zones"; montrer("conseils"); }
     else if (msg === "spe" || msg === "spé") { speSuivante(); montrer("talents"); }
     else if (msg === "build") { buildSuivant(); montrer("talents"); }
     else if (msg === "aide" || msg === "help") {
       chat(prefixe + "/aideclasse : ouvrir/fermer la fenêtre");
       chat(prefixe + "/aideclasse talents | stuff | conseils : ouvrir un onglet");
+      chat(prefixe + "/aideclasse zones : zones de montée en niveau");
       chat(prefixe + "/aideclasse spe : spécialisation suivante — /aideclasse build : build suivant");
       chat(prefixe + "/aideclasse minimap : cacher/afficher l'icône");
     } else basculer();
   }
   $("formChat").addEventListener("submit", (e) => { e.preventDefault(); commande($("saisie").value); $("saisie").value = ""; });
-  for (const c of ["/aideclasse", "/aideclasse stuff", "/aideclasse conseils", "/aideclasse minimap", "/aideclasse aide"]) {
+  for (const c of ["/aideclasse", "/aideclasse stuff", "/aideclasse conseils", "/aideclasse zones", "/aideclasse minimap", "/aideclasse aide"]) {
     const b = document.createElement("button"); b.type = "button"; b.innerHTML = `<code>${c}</code>`;
     b.addEventListener("click", () => commande(c)); $("raccourcis").appendChild(b);
   }
@@ -544,7 +621,30 @@ body {
     const it = liste.find((x) => String(x.id) === o.dataset.objet); if (!it) return;
     bulle(o.querySelector("img"), `<b class="c-epique">${esc(it.nom)}</b><span class="c-blanc">${esc(it.emplacement)}</span><br><span class="c-gris">(caractéristiques de l'objet…)</span><br><span class="c-demo">AideClasse : ${esc(it.rang)} ${esc(spec().nom)} (${esc(it.emplacement)})</span>`);
   });
-  $("defile").addEventListener("mouseout", (e) => { if (e.target.closest("[data-objet]")) cacherBulle(); });
+  $("defile").addEventListener("mouseout", (e) => { if (e.target.closest("[data-objet], [data-point]")) cacherBulle(); });
+
+  // --- Zones d'xp : sous-onglets et bouton Point ---
+  $("sousOnglets").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-mode]"); if (!b) return;
+    etat.modeConseils = b.dataset.mode; $("defile").scrollTop = 0; rafraichir();
+  });
+  $("defile").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-point]"); if (!b) return;
+    const p = points[+b.dataset.point];
+    etat.way = commandeWay(p); $("lien").value = etat.way; sauver();
+    chat(prefixe + (etat.tomtom ? `point TomTom posé : ${esc(p.title)} (${p.x}, ${p.y}).`
+      : `point posé sur ta carte : ${esc(p.title)} (${p.x}, ${p.y}).`));
+  });
+  $("defile").addEventListener("mouseover", (e) => {
+    const b = e.target.closest("[data-point]"); if (!b) return;
+    const p = points[+b.dataset.point];
+    bulle(b, `<b>${esc(p.title)}</b><span class="c-blanc">${esc(commandeWay(p))}</span><br><span class="c-vert">${etat.tomtom ? "Clic : flèche TomTom vers ce lieu." : "Clic : point sur la carte (TomTom conseillé pour la flèche)."}</span>`, true);
+  });
+  $("choixFaction").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-faction]"); if (!b) return;
+    etat.faction = b.dataset.faction; chat(prefixe + `faction simulée : ${esc(etat.faction)}.`); rafraichir();
+  });
+  $("tomtom").addEventListener("change", (e) => { etat.tomtom = e.target.checked; rafraichir(); });
 
   // --- Fenêtre déplaçable ---
   let tire = null;
