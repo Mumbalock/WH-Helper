@@ -1011,6 +1011,47 @@ def lire_json(chemin):
     return {}
 
 
+def lire_url_windows(url, entetes):
+    """Téléchargement par Windows lui-même (PowerShell). Contrairement à Python, Windows sait aller
+    chercher un certificat racine qui lui manque encore (ex. Sectigo Root E46, utilisé par GitHub)."""
+    import subprocess
+    import tempfile
+    fd, fichier = tempfile.mkstemp(prefix="whhelper_")
+    os.close(fd)
+    h = "; ".join(f"'{k}' = '{v}'" for k, v in entetes.items())
+    commande = (f"$ProgressPreference = 'SilentlyContinue'; "
+                f"Invoke-WebRequest -UseBasicParsing -Uri '{url}' -Headers @{{{h}}} -OutFile '{fichier}'")
+    try:
+        subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", commande],
+                       check=True, capture_output=True, timeout=180,
+                       creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        with open(fichier, "rb") as f:
+            return f.read()
+    except subprocess.CalledProcessError as e:
+        raise OSError(f"téléchargement par Windows impossible : {e.stderr.decode('cp850', 'replace').strip()[:300]}")
+    finally:
+        os.remove(fichier)
+
+
+def lire_url(url, accept=None):
+    """Télécharge une adresse GitHub."""
+    entetes = {"User-Agent": UA}
+    if accept:
+        entetes["Accept"] = accept
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=entetes), timeout=120) as r:
+            return r.read()
+    except urllib.error.URLError as e:
+        if not (isinstance(e.reason, ssl_erreur_certificat()) and sys.platform == "win32"):
+            raise
+    return lire_url_windows(url, entetes)
+
+
+def ssl_erreur_certificat():
+    import ssl
+    return ssl.SSLCertVerificationError
+
+
 def depuis_github(jeu, force):
     """Télécharge l'addon à jour depuis GitHub (mis à jour chaque jour par le serveur GitHub)
     et le copie dans le jeu, seulement si une nouvelle version a été publiée."""
@@ -1018,10 +1059,8 @@ def depuis_github(jeu, force):
     if not addons:
         return
     etat = lire_json(ETAT_PC)
-    req = urllib.request.Request(f"https://api.github.com/repos/{DEPOT}/commits/{BRANCHE}",
-                                 headers={"User-Agent": UA, "Accept": "application/vnd.github+json"})
-    with urllib.request.urlopen(req, timeout=40) as r:
-        commit = json.load(r)
+    commit = json.loads(lire_url(f"https://api.github.com/repos/{DEPOT}/commits/{BRANCHE}",
+                                 "application/vnd.github+json"))
     sha = commit["sha"]
     date = commit["commit"]["committer"]["date"][:16].replace("T", " ")
     deja_la = os.path.isfile(os.path.join(addons, "WHHelper", "WHHelper.toc"))
@@ -1029,9 +1068,7 @@ def depuis_github(jeu, force):
         log(f"Rien de nouveau sur GitHub (version du {date} UTC déjà installée).")
         return
     log(f"Nouvelle version sur GitHub ({date} UTC), téléchargement…")
-    req = urllib.request.Request(f"https://codeload.github.com/{DEPOT}/zip/{sha}", headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=120) as r:
-        octets = r.read()
+    octets = lire_url(f"https://codeload.github.com/{DEPOT}/zip/{sha}")
     tmp = os.path.join(ICI, "_github")
     if os.path.isdir(tmp):
         shutil.rmtree(tmp)
