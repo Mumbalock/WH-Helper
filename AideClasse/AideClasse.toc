@@ -1,0 +1,22 @@
+## Interface: 11508, 16000, 16001
+## Title: AideClasse
+## Notes: Talents, stuff et stats pour ta classe, d'après les guides Wowhead.
+## Author: ritch
+## Version: 0.5.0
+## SavedVariables: AideClasseDB
+## IconTexture: Interface\Icons\INV_Misc_Book_09
+
+Core.lua
+Data\Warrior.lua
+Data\Paladin.lua
+Data\Hunter.lua
+Data\Rogue.lua
+Data\Priest.lua
+Data\Shaman.lua
+Data\Mage.lua
+Data\Warlock.lua
+Data\Druid.lua
+Data\Conseils.lua
+Data\Zones.lua
+UI.lua
+Minimap.lua

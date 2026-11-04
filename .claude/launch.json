@@ -1,0 +1,12 @@
+﻿{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "simulateur",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8765", "--bind", "127.0.0.1", "--directory", "Simulateur"],
+      "port": 8765
+    }
+  ]
+}
+
