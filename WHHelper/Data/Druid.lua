@@ -5,7 +5,7 @@ local _, ns = ...
 ns.data.DRUID = {
     token = "DRUID",
     nom = "Druide",
-    majLe = "2026-11-07 05:45",
+    majLe = "2026-11-08 05:47",
     source = "Wowhead – guides WoW Forever",
     defaultSpec = "balance",
     ordreSpecs = {
@@ -1033,7 +1033,7 @@ ns.data.DRUID = {
                 { id = 254081, nom = "Gilded Waistcord", icone = "inv_belt_07", emplacement = "Taille", source = "{i:254082:Pattern: Gilded Waistcord}", rang = "Optional" },
                 { id = 252486, nom = "Ironfeather Leggings", icone = "inv_pants_leather_26", emplacement = "Jambes", source = "{i:252895:Pattern: Ironfeather Leggings}", rang = "BiS" },
                 { id = 279254, nom = "Elderwild Pants", icone = "inv_pants_cloth_08", emplacement = "Jambes", source = "{i:279303:Pattern: Elderwild Pants}", rang = "Très bon" },
-                { id = 11841, nom = "", icone = "", emplacement = "Jambes", source = "Fineous Darkvire", rang = "Bon" },
+                { id = 11841, nom = "Senior Designer's Pantaloons", icone = "inv_pants_09", emplacement = "Jambes", source = "Fineous Darkvire", rang = "Bon" },
                 { id = 16694, nom = "Devout Skirt", icone = "inv_pants_08", emplacement = "Jambes", source = "Baron Rivendare", rang = "Optional" },
                 { id = 22747, nom = "Outrider's Silk Leggings", icone = "inv_pants_cloth_05", emplacement = "Jambes", source = "Kelm Hargunth", rang = "Optional" },
                 { id = 15802, nom = "Mooncloth Boots", icone = "inv_boots_05", emplacement = "Pieds", source = "{s:19435:Mooncloth Boots}", rang = "BiS" },
@@ -1058,7 +1058,7 @@ ns.data.DRUID = {
                 { id = 270276, nom = "Cleansed Vilebranch Icon", icone = "inv_misc_coin_08", emplacement = "Bijoux", source = "", rang = "Optional" },
                 { id = 272061, nom = "Darkspear Voodoo Seal", icone = "inv_misc_rune_06", emplacement = "Bijoux", source = "Creeg Bothunk", rang = "Optional" },
                 { id = 272681, nom = "Premier High Warlord's Battle Mace", icone = "inv_hammer_02", emplacement = "1H Weapons", source = "", rang = "BiS" },
-                { id = 17710, nom = "", icone = "", emplacement = "1H Weapons", source = "Princess Theradras", rang = "Très bon" },
+                { id = 17710, nom = "Charstone Dirk", icone = "inv_weapon_shortblade_14", emplacement = "1H Weapons", source = "Princess Theradras", rang = "Très bon" },
                 { id = 275647, nom = "Cleansed Ritual Kris", icone = "inv_weapon_shortblade_12", emplacement = "1H Weapons", source = "", rang = "Bon" },
                 { id = 275698, nom = "Yaely's Mending Tool", icone = "inv_misc_wrench_01", emplacement = "1H Weapons", source = "", rang = "Optional" },
                 { id = 7721, nom = "Hand of Righteousness", icone = "inv_hammer_02", emplacement = "1H Weapons", source = "High Inquisitor Whitemane", rang = "Optional" },
