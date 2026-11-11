@@ -5,7 +5,7 @@ local _, ns = ...
 ns.data.SHAMAN = {
     token = "SHAMAN",
     nom = "Chaman",
-    majLe = "2026-11-10 05:46",
+    majLe = "2026-11-11 05:52",
     source = "Wowhead – guides WoW Forever",
     defaultSpec = "elemental",
     ordreSpecs = {
@@ -351,7 +351,7 @@ ns.data.SHAMAN = {
                 { id = 279270, nom = "Cloak of Earth and Sky", icone = "inv_misc_cape_13", emplacement = "Dos", source = "Tailoring\n{i:279319:Pattern: Cloak of Earth and Sky}", rang = "Très bon" },
                 { id = 19085, nom = "Frostwolf Advisor's Cloak", icone = "inv_misc_cape_16", emplacement = "Dos", source = "Alterac Valley Vendors", rang = "Très bon" },
                 { id = 19086, nom = "Stormpike Sage's Cloak", icone = "inv_misc_cape_18", emplacement = "Dos", source = "Alterac Valley Vendors", rang = "Très bon" },
-                { id = 19121, nom = "Deep Woodlands Cloak", icone = "inv_misc_cape_17", emplacement = "Dos", source = "Wanted: Vile Priestess Hexx and Her Minions", rang = "Bon" },
+                { id = 19121, nom = "Deep Woodlands Cloak", icone = "inv_misc_cape_17", emplacement = "Dos", source = "WANTED: Vile Priestess Hexx and Her Minions", rang = "Bon" },
                 { id = 10266, nom = "Masterwork Breastplate", icone = "inv_chest_plate16", emplacement = "Torse", source = "World Drop", rang = "BiS" },
                 { id = 22102, nom = "Vest of The Five Thunders", icone = "inv_chest_chain_11", emplacement = "Torse", source = "Tier 0.5 Quest Chain", rang = "Très bon" },
                 { id = 16666, nom = "Vest of Elements", icone = "inv_chest_chain_11", emplacement = "Torse", source = "General Drakkisath\nBlackrock Spire", rang = "Très bon" },
@@ -954,7 +954,7 @@ ns.data.SHAMAN = {
                 { id = 279270, nom = "Cloak of Earth and Sky", icone = "inv_misc_cape_13", emplacement = "Dos", source = "Tailoring\n{i:279319:Pattern: Cloak of Earth and Sky}", rang = "Très bon" },
                 { id = 19085, nom = "Frostwolf Advisor's Cloak", icone = "inv_misc_cape_16", emplacement = "Dos", source = "Alterac Valley Vendors", rang = "Très bon" },
                 { id = 19086, nom = "Stormpike Sage's Cloak", icone = "inv_misc_cape_18", emplacement = "Dos", source = "Alterac Valley Vendors", rang = "Très bon" },
-                { id = 19121, nom = "Deep Woodlands Cloak", icone = "inv_misc_cape_17", emplacement = "Dos", source = "Wanted: Vile Priestess Hexx and Her Minions", rang = "Bon" },
+                { id = 19121, nom = "Deep Woodlands Cloak", icone = "inv_misc_cape_17", emplacement = "Dos", source = "WANTED: Vile Priestess Hexx and Her Minions", rang = "Bon" },
                 { id = 10266, nom = "Masterwork Breastplate", icone = "inv_chest_plate16", emplacement = "Torse", source = "World Drop", rang = "BiS" },
                 { id = 22102, nom = "Vest of The Five Thunders", icone = "inv_chest_chain_11", emplacement = "Torse", source = "Tier 0.5 Quest Chain", rang = "Très bon" },
                 { id = 16666, nom = "Vest of Elements", icone = "inv_chest_chain_11", emplacement = "Torse", source = "General Drakkisath\nBlackrock Spire", rang = "Très bon" },

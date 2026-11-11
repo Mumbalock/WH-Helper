@@ -5,7 +5,7 @@ local _, ns = ...
 ns.data.WARRIOR = {
     token = "WARRIOR",
     nom = "Guerrier",
-    majLe = "2026-11-10 05:44",
+    majLe = "2026-11-11 05:50",
     source = "Wowhead – guides WoW Forever",
     defaultSpec = "arms",
     ordreSpecs = {
@@ -909,7 +909,7 @@ ns.data.WARRIOR = {
                 { id = 14549, nom = "Boots of Avoidance", icone = "inv_boots_plate_05", emplacement = "Pieds", source = "World BOE", rang = "Option" },
                 { id = 275736, nom = "Horn of Ve'han", icone = "inv_misc_horn_03", emplacement = "Cou", source = "Datamined - Unknown", rang = "BiS" },
                 { id = 22150, nom = "Beads of Ogre Might", icone = "inv_jewelry_amulet_05", emplacement = "Cou", source = "Falrin's Vendetta", rang = "Très bon" },
-                { id = 19159, nom = "Woven Ivy Necklace", icone = "inv_misc_herb_15", emplacement = "Cou", source = "Wanted: Vile Priestess Hexx and Her Minions", rang = "Bon" },
+                { id = 19159, nom = "Woven Ivy Necklace", icone = "inv_misc_herb_15", emplacement = "Cou", source = "WANTED: Vile Priestess Hexx and Her Minions", rang = "Bon" },
                 { id = 275984, nom = "Warden's Signet of Vigilance", icone = "inv_jewelry_ring_10", emplacement = "Anneaux", source = "Exalted with The Watchers (currently unobtainable)", rang = "BiS" },
                 { id = 19325, nom = "Don Julio's Band", icone = "inv_jewelry_ring_35", emplacement = "Anneaux", source = "Exalted with Stormpike Guard", rang = "Très bon" },
                 { id = 272408, nom = "Cutthroat's Signet", icone = "inv_jewelry_ring_01", emplacement = "Anneaux", source = "75", rang = "Bon" },
