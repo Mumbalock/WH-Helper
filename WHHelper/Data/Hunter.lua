@@ -5,7 +5,7 @@ local _, ns = ...
 ns.data.HUNTER = {
     token = "HUNTER",
     nom = "Chasseur",
-    majLe = "2026-11-15 05:48",
+    majLe = "2026-11-16 06:25",
     source = "Wowhead – guides WoW Forever",
     defaultSpec = "beast_mastery",
     ordreSpecs = {
@@ -227,7 +227,7 @@ ns.data.HUNTER = {
             },
             objets = {},
             stats = {
-                "% Hit Chance until 9%",
+                "% Hit Chance until 8%",
                 "% Critical Strike Chance",
                 "Agility",
                 "Intellect",
@@ -362,7 +362,7 @@ ns.data.HUNTER = {
             },
             objets = {},
             stats = {
-                "% Hit Chance until 9%",
+                "% Hit Chance until 8%",
                 "% Critical Strike Chance",
                 "Agility",
                 "Intellect",
