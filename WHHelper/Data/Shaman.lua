@@ -5,7 +5,7 @@ local _, ns = ...
 ns.data.SHAMAN = {
     token = "SHAMAN",
     nom = "Chaman",
-    majLe = "2026-11-17 05:54",
+    majLe = "2026-11-18 05:55",
     source = "Wowhead – guides WoW Forever",
     defaultSpec = "elemental",
     ordreSpecs = {
@@ -710,11 +710,11 @@ ns.data.SHAMAN = {
                 },
             },
             objets = {
-                { id = 22097, nom = "Coif of The Five Thunders", icone = "inv_helmet_04", emplacement = "Tête", source = "T0.5 Questline", rang = "BiS" },
+                { id = 227002, nom = "Coif of The Five Thunders", icone = "inv_helmet_04", emplacement = "Tête", source = "T0.5 Questline", rang = "BiS" },
                 { id = 252605, nom = "Black Dragonscale Helm", icone = "inv_helmet_09", emplacement = "Tête", source = "Crafted by", rang = "Très bon" },
                 { id = 20134, nom = "Skyfury Helm", icone = "inv_helmet_57", emplacement = "Tête", source = "The Darkreaver Menace", rang = "Bon" },
                 { id = 12587, nom = "Eye of Rend", icone = "inv_helmet_46", emplacement = "Tête", source = "Warchief Rend Blackhand", rang = "Option" },
-                { id = 22101, nom = "Pauldrons of The Five Thunders", icone = "inv_shoulder_29", emplacement = "Épaules", source = "T0.5 Questline", rang = "BiS" },
+                { id = 227003, nom = "Pauldrons of The Five Thunders", icone = "inv_shoulder_29", emplacement = "Épaules", source = "T0.5 Questline", rang = "BiS" },
                 { id = 277117, nom = "Savage Gladiator Shoulders", icone = "inv_shoulder_02", emplacement = "Épaules", source = "Grizzle", rang = "Très bon" },
                 { id = 14503, nom = "Death's Clutch", icone = "inv_shoulder_25", emplacement = "Épaules", source = "Ras Frostwhisper", rang = "Bon" },
                 { id = 19050, nom = "Mantle of the Timbermaw", icone = "inv_shoulder_19", emplacement = "Épaules", source = "", rang = "Option" },
