@@ -5,7 +5,7 @@ local _, ns = ...
 ns.data.SHAMAN = {
     token = "SHAMAN",
     nom = "Chaman",
-    majLe = "2026-11-20 05:55",
+    majLe = "2026-11-21 05:51",
     source = "Wowhead – guides WoW Forever",
     defaultSpec = "elemental",
     ordreSpecs = {
@@ -763,7 +763,7 @@ ns.data.SHAMAN = {
                 { id = 17713, nom = "Blackstone Ring", icone = "inv_jewelry_ring_17", emplacement = "Anneaux", source = "Princess Theradras", rang = "Bon" },
                 { id = 18314, nom = "Ring of Demonic Guile", icone = "inv_jewelry_ring_31", emplacement = "Anneaux", source = "Alzzin the Wildshaper", rang = "Option" },
                 { id = 13965, nom = "Blackhand's Breadth", icone = "inv_misc_armorkit_09", emplacement = "Bijoux", source = "For The Horde!/General Drakkisath's Demise", rang = "BiS" },
-                { id = 272438, nom = "Weakness Analyzer", icone = "inv_misc_blizzcon09_graphicscard", emplacement = "Bijoux", source = "Sold by Pix Xizzix", rang = "Très bon" },
+                { id = 272437, nom = "Adaptive Combat Assistant", icone = "inv_engineering_90_lightningbox", emplacement = "Bijoux", source = "Sold by Pix Xizzix", rang = "Très bon" },
                 { id = 11815, nom = "Hand of Justice", icone = "inv_jewelry_talisman_01", emplacement = "Bijoux", source = "Emperor Dagran Thaurissan", rang = "Bon" },
                 { id = 22321, nom = "Heart of Wyrmthalak", icone = "inv_misc_gem_bloodstone_01", emplacement = "Bijoux", source = "Overlord Wyrmthalak", rang = "Option" },
                 { id = 19323, nom = "The Unstoppable Force", icone = "inv_hammer_13", emplacement = "2H Weapons", source = "Sold by Thanthaldis Snowgleam", rang = "BiS" },
