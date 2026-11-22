@@ -5,7 +5,7 @@ local _, ns = ...
 ns.data.DRUID = {
     token = "DRUID",
     nom = "Druide",
-    majLe = "2026-11-21 05:52",
+    majLe = "2026-11-22 05:54",
     source = "Wowhead – guides WoW Forever",
     defaultSpec = "balance",
     ordreSpecs = {
@@ -916,7 +916,7 @@ ns.data.DRUID = {
                 { id = 22150, nom = "Beads of Ogre Might", icone = "inv_jewelry_amulet_05", emplacement = "Cou", source = "Falrin's Vendetta", rang = "GreatHit" },
                 { id = 23198, nom = "Idol of Brutality", icone = "inv_relics_idolofferocity", emplacement = "Idols", source = "Magistrate Barthilas", rang = "BiS" },
                 { id = 272428, nom = "Enraged Idol", icone = "talentspec_druid_feral_bear", emplacement = "Idols", source = "50", rang = "BiS" },
-                { id = 272437, nom = "Adaptive Combat Assistant", icone = "inv_engineering_90_lightningbox", emplacement = "Bijoux", source = "120", rang = "BiS" },
+                { id = 272437, nom = "Adaptive Combat Assistant", icone = "inv_engineering_90_lightningbox", emplacement = "Bijoux", source = "125", rang = "BiS" },
                 { id = 20072, nom = "Defiler's Talisman", icone = "inv_jewelry_talisman_05", emplacement = "Bijoux", source = "The DefilersThe League of Arathor", rang = "Très bon" },
                 { id = 20071, nom = "Talisman of Arathor", icone = "inv_jewelry_talisman_05", emplacement = "Bijoux", source = "The DefilersThe League of Arathor", rang = "Très bon" },
                 { id = 13966, nom = "Mark of Tyranny", icone = "inv_jewelry_talisman_09", emplacement = "Bijoux", source = "For The Horde!General Drakkisath's Demise", rang = "Très bon" },
