@@ -5,7 +5,7 @@ local _, ns = ...
 ns.data.MAGE = {
     token = "MAGE",
     nom = "Mage",
-    majLe = "2026-11-22 05:53",
+    majLe = "2026-11-23 06:11",
     source = "Wowhead – guides WoW Forever",
     defaultSpec = "arcane",
     ordreSpecs = {
@@ -443,6 +443,7 @@ ns.data.MAGE = {
                 { id = 19315, nom = "Therazane's Touch", icone = "inv_misc_branch_01", emplacement = "Offhands", source = "Alterac Valley Exalted", rang = "BiS" },
                 { id = 18316, nom = "Obsidian Bauble", icone = "inv_misc_orb_04", emplacement = "Offhands", source = "Pusillin - Dire Maul East", rang = "BiS" },
                 { id = 22253, nom = "Tome of the Lost", icone = "inv_misc_book_06", emplacement = "Offhands", source = "General Drakkisath - Blackrock Spire", rang = "Bon" },
+                { id = 11904, nom = "Spirit of Aquementas", icone = "inv_ore_arcanite_02", emplacement = "Offhands", source = "It's Dangerous to Go Alone Un'Goro Crater Quest", rang = "Bon" },
                 { id = 221344, nom = "Personal Spellbook", icone = "inv_misc_book_11", emplacement = "Offhands", source = "A Lesson in Literacy Mage Class Quest", rang = "Option" },
                 { id = 13938, nom = "Bonecreeper Stylus", icone = "inv_misc_bone_taurenskull_01", emplacement = "Wands", source = "Darkmaster Gandling - Scholomance", rang = "BiS" },
                 { id = 18761, nom = "Oblivion's Touch", icone = "inv_wand_12", emplacement = "Wands", source = "Death Knight Darkreaver - Scholomance", rang = "Très bon" },
