@@ -5,7 +5,7 @@ local _, ns = ...
 ns.data.SHAMAN = {
     token = "SHAMAN",
     nom = "Chaman",
-    majLe = "2026-11-24 05:59",
+    majLe = "2026-11-25 06:01",
     source = "Wowhead – guides WoW Forever",
     defaultSpec = "elemental",
     ordreSpecs = {
@@ -775,7 +775,7 @@ ns.data.SHAMAN = {
                 { id = 250617, nom = "Stormcarver", icone = "inv_axe_04", emplacement = "2H Weapons", source = "Crafted by", rang = "Option" },
                 { id = 23199, nom = "Totem of the Storm", icone = "inv_relics_totemofrage", emplacement = "Idols", source = "World Drop", rang = "BiS" },
                 { id = 22395, nom = "Totem of Rage", icone = "inv_relics_totemofrage", emplacement = "Idols", source = "Magmus", rang = "Très bon" },
-                { id = 272432, nom = "Totem of the Storm", icone = "spell_shaman_stormtotem", emplacement = "Idols", source = "Sold by Pix Xizzix", rang = "Bon" },
+                { id = 272432, nom = "Totem of the Maelstrom", icone = "spell_shaman_stormtotem", emplacement = "Idols", source = "Sold by Pix Xizzix", rang = "Bon" },
                 { id = 249398, nom = "Polished Driftwood Icon", icone = "spell_shaman_totemrecall", emplacement = "Idols", source = "Crafted by", rang = "Option" },
             },
             stats = {
@@ -1079,7 +1079,7 @@ ns.data.SHAMAN = {
                 { id = 18491, nom = "Lorespinner", icone = "inv_weapon_shortblade_21", emplacement = "1H Weapons", source = "Lethtendris's Web (Alliance) (Dire Maul)\nLethtendris's Web (Horde) (Dire Maul)", rang = "Très bon" },
                 { id = 276404, nom = "Masterwork Crimson Hammer", icone = "inv_hammer_02", emplacement = "1H Weapons", source = "Crimson Hammersmith (Stratholme)", rang = "Très bon" },
                 { id = 17710, nom = "Charstone Dirk", icone = "inv_weapon_shortblade_14", emplacement = "1H Weapons", source = "Princess Theradras (Maraudon)", rang = "Très bon" },
-                { id = 812, nom = "Glowing Brightwood Staff", icone = "inv_staff_29", emplacement = "2H Weapons", source = "Drop", rang = "BiS" },
+                { id = 812, nom = "Glowing Brightwood Staff", icone = "inv_staff_29", emplacement = "2H Weapons", source = "BoE World Drop", rang = "BiS" },
                 { id = 18717, nom = "Hammer of the Grand Crusader", icone = "inv_hammer_06", emplacement = "2H Weapons", source = "Zone Drop (Stratholme)", rang = "Très bon" },
                 { id = 22394, nom = "Staff of Metanoia", icone = "inv_staff_29", emplacement = "2H Weapons", source = "Jandice Barov (Scholomance)", rang = "Très bon" },
                 { id = 22406, nom = "Redemption", icone = "inv_staff_23", emplacement = "2H Weapons", source = "Cannon Master Willey (Stratholme)", rang = "Très bon" },
