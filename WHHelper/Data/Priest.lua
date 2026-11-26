@@ -5,7 +5,7 @@ local _, ns = ...
 ns.data.PRIEST = {
     token = "PRIEST",
     nom = "Prêtre",
-    majLe = "2026-11-25 06:01",
+    majLe = "2026-11-26 05:59",
     source = "Wowhead – guides WoW Forever",
     defaultSpec = "discipline",
     ordreSpecs = {
@@ -763,8 +763,11 @@ ns.data.PRIEST = {
                 { id = 18720, nom = "Shroud of the Nathrezim", icone = "inv_shoulder_23", emplacement = "Épaules", source = "Grand Crusader Dathrohan\nBalnazzar\n(Stratholme)", rang = "Option" },
                 { id = 18681, nom = "Burial Shawl", icone = "inv_shoulder_05", emplacement = "Épaules", source = "Zone Drop\n(Scholomance)", rang = "Option" },
                 { id = 272411, nom = "Arcanoweave Cloak", icone = "inv_misc_cape_05", emplacement = "Dos", source = "Pix Xizzix\n(Undermine Trader)", rang = "BiS" },
-                { id = 279269, nom = "Fel Cape", icone = "inv_misc_cape_01", emplacement = "Dos", source = "{s:1306543:Fel Cape}\n(Tailoring)", rang = "Très bon" },
+                { id = 13386, nom = "Archivist Cape", icone = "inv_misc_cape_19", emplacement = "Dos", source = "Archivist Galford\n(Stratholme)", rang = "Très bon" },
                 { id = 10249, nom = "Master's Cloak", icone = "inv_misc_cape_20", emplacement = "Dos", source = "World Drop\n(Bind on Equip)", rang = "Bon" },
+                { id = 18510, nom = "Hide of the Wild", icone = "inv_misc_cape_01", emplacement = "Dos", source = "{s:22927:Hide of the Wild}\n(Leatherworking)", rang = "Bon" },
+                { id = 18496, nom = "Heliotrope Cloak", icone = "inv_misc_cape_02", emplacement = "Dos", source = "Guard Slip'kik\nGuard Mol'dar\n(Dire Maul)", rang = "Bon" },
+                { id = 11623, nom = "Spritecaster Cape", icone = "inv_misc_cape_20", emplacement = "Dos", source = "Houndmaster Grebmar\n(Blackrock Depths)", rang = "Bon" },
                 { id = 14136, nom = "Robe of Winter Night", icone = "inv_chest_cloth_49", emplacement = "Torse", source = "{s:18436:Robe of Winter Night}\n(Tailoring)", rang = "BiS" },
                 { id = 280057, nom = "Robes of Dark Summons", icone = "inv_chest_cloth_25", emplacement = "Torse", source = "Impaan the Imprisoner\n(Blackmaw Hold)", rang = "Très bon" },
                 { id = 13314, nom = "Alanna's Embrace", icone = "inv_chest_cloth_12", emplacement = "Torse", source = "Ras Frostwhisper\n(Scholomance)", rang = "Bon" },

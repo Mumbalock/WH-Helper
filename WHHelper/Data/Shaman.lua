@@ -5,7 +5,7 @@ local _, ns = ...
 ns.data.SHAMAN = {
     token = "SHAMAN",
     nom = "Chaman",
-    majLe = "2026-11-25 06:01",
+    majLe = "2026-11-26 06:00",
     source = "Wowhead – guides WoW Forever",
     defaultSpec = "elemental",
     ordreSpecs = {
@@ -1063,6 +1063,8 @@ ns.data.SHAMAN = {
                 { id = 18507, nom = "Boots of the Full Moon", icone = "inv_boots_05", emplacement = "Pieds", source = "Captain Kromcrush (Dire Maul)", rang = "Très bon" },
                 { id = 18723, nom = "Animated Chain Necklace", icone = "inv_jewelry_necklace_01", emplacement = "Cou", source = "Ramstein the Gorger (Stratholme)", rang = "BiS" },
                 { id = 13960, nom = "Heart of the Fiend", icone = "inv_misc_orb_03", emplacement = "Cou", source = "Kirtonos the Herald (Scholomance)", rang = "Très bon" },
+                { id = 272407, nom = "Blessed Band of Light", icone = "inv_jewelry_ring_60", emplacement = "Cou", source = "Pix Xizzix (Stranglethorn Vale):", rang = "Très bon" },
+                { id = 275740, nom = "Ring of Nature's Cycles", icone = "inv_jewelry_ring_11", emplacement = "Cou", source = "Work Well Done (Mount Hyjal)", rang = "Très bon" },
                 { id = 19426, nom = "Orb of the Darkmoon", icone = "inv_jewelry_necklace_16", emplacement = "Cou", source = "1200 Tickets - Orb of the Darkmoon\nGelvas Grimegate:", rang = "Très bon" },
                 { id = 10829, nom = "Dragon's Eye", icone = "inv_jewelry_amulet_04", emplacement = "Cou", source = "Shade of Eranikus (The Temple of Atal'Hakkar)", rang = "Très bon" },
                 { id = 16058, nom = "Fordring's Seal", icone = "inv_jewelry_ring_19", emplacement = "Anneaux", source = "In Dreams (Western Plaguelands)", rang = "BiS" },
