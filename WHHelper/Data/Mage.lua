@@ -5,7 +5,7 @@ local _, ns = ...
 ns.data.MAGE = {
     token = "MAGE",
     nom = "Mage",
-    majLe = "2026-11-27 06:00",
+    majLe = "2026-11-28 05:55",
     source = "Wowhead – guides WoW Forever",
     defaultSpec = "arcane",
     ordreSpecs = {
@@ -365,6 +365,7 @@ ns.data.MAGE = {
                 { id = 18497, nom = "Sublime Wristguards", icone = "inv_bracer_13", emplacement = "Poignets", source = "Guard Slip'kik & Guard Mol'dar - Dire Maul", rang = "Bon" },
                 { id = 11962, nom = "Manacle Cuffs", icone = "inv_bracer_13", emplacement = "Poignets", source = "The Love Potion - Blackrock Depths", rang = "Option" },
                 { id = 254123, nom = "Runecloth Cuffs", icone = "inv_bracer_13", emplacement = "Poignets", source = "Tailoring BoE", rang = "Option" },
+                { id = 16683, nom = "Magister's Bindings", icone = "inv_jewelry_ring_23", emplacement = "Poignets", source = "Blackrock Spire BoE", rang = "Option" },
                 { id = 226930, nom = "Sorcerer's Gauntlets", icone = "inv_gauntlets_17", emplacement = "Mains", source = "Just Compensation & Just Compensation - T0.5 Quest Chain", rang = "BiS" },
                 { id = 14146, nom = "Gloves of Spell Mastery", icone = "inv_gauntlets_06", emplacement = "Mains", source = "Tailoring BoE - {i:14511:Pattern: Gloves of Spell Mastery}", rang = "Très bon" },
                 { id = 13253, nom = "Hands of Power", icone = "inv_gauntlets_14", emplacement = "Mains", source = "Quartermaster Zigris - Blackrock Spire", rang = "Bon" },
@@ -402,8 +403,9 @@ ns.data.MAGE = {
                 { id = 12543, nom = "Songstone of Ironforge", icone = "inv_jewelry_ring_05", emplacement = "Anneaux", source = "The Princess's Surprise\nThe Princess Saved?", rang = "BiS" },
                 { id = 12545, nom = "Eye of Orgrimmar", icone = "inv_jewelry_ring_05", emplacement = "Anneaux", source = "The Princess's Surprise\nThe Princess Saved?", rang = "BiS" },
                 { id = 22339, nom = "Rune Band of Wizardry", icone = "inv_jewelry_ring_35", emplacement = "Anneaux", source = "Lord Valthalak - Blackrock Spire", rang = "BiS" },
-                { id = 22433, nom = "Don Mauricio's Band of Domination", icone = "inv_jewelry_ring_16", emplacement = "Anneaux", source = "Darkmaster Gandling - Scholomance", rang = "Très bon" },
                 { id = 275738, nom = "Jereman's Bauble", icone = "inv_jewelry_ring_16", emplacement = "Anneaux", source = "Return to Jereman Mount Hyjal Quest", rang = "Très bon" },
+                { id = 17045, nom = "Blood of the Martyr", icone = "inv_jewelry_ring_25", emplacement = "Anneaux", source = "Aurius' Reckoning - Stratholme", rang = "Très bon" },
+                { id = 22433, nom = "Don Mauricio's Band of Domination", icone = "inv_jewelry_ring_16", emplacement = "Anneaux", source = "Darkmaster Gandling - Scholomance", rang = "Très bon" },
                 { id = 13345, nom = "Seal of Rivendare", icone = "inv_jewelry_ring_16", emplacement = "Anneaux", source = "Baron Rivendare - Stratholme", rang = "Très bon" },
                 { id = 13001, nom = "Maiden's Circle", icone = "inv_jewelry_ring_12", emplacement = "Anneaux", source = "World BoE", rang = "Bon" },
                 { id = 22268, nom = "Draconic Infused Emblem", icone = "inv_jewelry_talisman_09", emplacement = "Bijoux", source = "General Drakkisath - Blackrock Spire", rang = "BiS" },
